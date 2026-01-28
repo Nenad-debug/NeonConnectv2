@@ -59,7 +59,7 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link 
-                to="/post-job" 
+                to="/signup?role=employer" 
                 className="px-8 py-4 border-2 border-slate-500 rounded-lg font-bold text-white hover:bg-slate-800/50 hover:border-blue-500 transition-all duration-300"
               >
                 Objavi posao

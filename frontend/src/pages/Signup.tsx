@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Mail, Lock, User, Briefcase, AlertCircle, ArrowRight, CheckCircle } from 'lucide-react'
 import { authService } from '../services/authService'
 import Background from '../components/common/Background'
@@ -12,8 +12,15 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const handleSignup = async (e: React.FormEvent) => {
+  // Set role from URL parameter if provided
+  useEffect(() => {
+    const roleParam = searchParams.get('role') as 'candidate' | 'employer' | null
+    if (roleParam && (roleParam === 'candidate' || roleParam === 'employer')) {
+      setRole(roleParam)
+    }
+  }, [searchParams])  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
