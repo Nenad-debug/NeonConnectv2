@@ -3,6 +3,7 @@ import Navbar from './components/common/Navbar'
 import Footer from './components/common/Footer'
 import AuthGuard from './components/common/AuthGuard'
 import MaintenanceBanner from './components/common/MaintenanceBanner'
+import GlobalAIAssistant from './components/common/GlobalAIAssistant'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -40,6 +41,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <GlobalAIAssistant />
         </div>
       </AuthGuard>
     </Router>

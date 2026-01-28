@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ChevronRight, ChevronLeft, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
 import ImageUpload from './ImageUpload'
+import AIChat from './AIChat'
 
 interface ProfileSetupProps {
   onComplete: (profileData: any) => Promise<void>
@@ -191,11 +192,13 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
 
   return (
     <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl max-h-screen overflow-y-auto">
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-100"></div>
-          
-          <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl p-8 space-y-8">
+      <div className="w-full max-w-6xl max-h-screen overflow-y-auto flex gap-4">
+        {/* Main Form Section */}
+        <div className="flex-1 min-w-0">
+          <div className="relative group h-full">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-100"></div>
+            
+            <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl p-8 space-y-8 h-full">
             {/* Header */}
             <div className="space-y-4">
               <h1 className="text-3xl font-black text-white">Kreiraj svoj profil</h1>
@@ -617,6 +620,31 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
                   Dalje
                   <ChevronRight className="w-5 h-5" />
                 </button>
+              )}
+            </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Assistant Section */}
+        <div className="hidden lg:flex w-80 flex-shrink-0">
+          <div className="relative group w-full">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-100"></div>
+            
+            <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl p-4 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-yellow-400" />
+                  AI Asistent
+                </h3>
+              </div>
+              
+              {user && (
+                <AIChat 
+                  userId={user.id}
+                  context="profile_setup"
+                  compact={true}
+                />
               )}
             </div>
           </div>
