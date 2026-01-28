@@ -1,18 +1,17 @@
 -- Create avatars storage bucket for profile images
--- Run this in Supabase SQL editor to create the storage bucket and set permissions
+-- IMPORTANT: First create the 'avatars' bucket manually in Supabase Storage dashboard
+-- Then run the RLS policies below
 
--- Create bucket (if not exists)
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('avatars', 'avatars', true) 
-ON CONFLICT (id) DO NOTHING;
+-- Enable RLS on storage.objects if not already enabled
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
--- Set RLS policy for avatars bucket - anyone can upload their own avatar
-DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
-CREATE POLICY "Users can upload their own avatar"
+-- Set RLS policy for avatars bucket - anyone can upload (authenticated users)
+DROP POLICY IF EXISTS "Users can upload avatars" ON storage.objects;
+CREATE POLICY "Users can upload avatars"
 ON storage.objects FOR INSERT
 WITH CHECK (
-  bucket_id = 'avatars' AND 
-  (storage.foldername(name))[1] = auth.uid()::text
+  bucket_id = 'avatars' AND
+  auth.role() = 'authenticated'
 );
 
 -- Set RLS policy for avatars bucket - anyone can read avatars
@@ -27,11 +26,11 @@ CREATE POLICY "Users can update their own avatar"
 ON storage.objects FOR UPDATE
 USING (
   bucket_id = 'avatars' AND 
-  (storage.foldername(name))[1] = auth.uid()::text
+  auth.uid()::text = (storage.foldername(name))[1]
 )
 WITH CHECK (
-  bucket_id = 'avatars' AND 
-  (storage.foldername(name))[1] = auth.uid()::text
+  bucket_id = 'avatars' AND
+  auth.uid()::text = (storage.foldername(name))[1]
 );
 
 -- Set RLS policy for avatars bucket - users can delete their own avatar
@@ -40,5 +39,5 @@ CREATE POLICY "Users can delete their own avatar"
 ON storage.objects FOR DELETE
 USING (
   bucket_id = 'avatars' AND 
-  (storage.foldername(name))[1] = auth.uid()::text
+  auth.uid()::text = (storage.foldername(name))[1]
 );

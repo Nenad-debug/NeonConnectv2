@@ -24,18 +24,17 @@ export const profileService = {
   async uploadProfileImage(userId: string, file: File): Promise<string> {
     if (!file) throw new Error('No file provided')
 
-    // Create file path
+    // Create file path - simpler path without folder structure for RLS
     const fileExt = file.name.split('.').pop()
-    const fileName = `${userId}-profile-${Date.now()}.${fileExt}`
-    const filePath = `profiles/${userId}/${fileName}`
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
 
     try {
-      console.log(`📸 [PROFILE SERVICE] Uploading image to ${filePath}`)
+      console.log(`📸 [PROFILE SERVICE] Uploading image: ${fileName}`)
 
       // Upload to Supabase Storage
       const { error } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
+        .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true,
         })
@@ -45,7 +44,7 @@ export const profileService = {
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(filePath)
+        .getPublicUrl(fileName)
 
       console.log(`✅ [PROFILE SERVICE] Image uploaded successfully: ${publicUrl}`)
       return publicUrl
