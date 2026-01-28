@@ -79,9 +79,10 @@ export const authService = {
       const refresh_token = params.get('refresh_token')
       if (access_token) {
         // Build a typed payload so we don't pass null to setSession (avoids TypeScript errors)
-        // access_token is checked above; inline-cast the object when calling setSession to satisfy the SDK types
+        // access_token is checked above; ensure refresh_token is always a string to satisfy setSession's type
+        const payload: { access_token: string; refresh_token: string } = { access_token: access_token!, refresh_token: refresh_token ?? '' }
         // setSession will populate the client with the authenticated session so getUser works
-        await supabase.auth.setSession({ access_token: access_token!, refresh_token: refresh_token ?? '' } as unknown as { access_token: string; refresh_token: string })
+        await supabase.auth.setSession(payload)
         return true
       }
     } catch (e) {
@@ -92,18 +93,17 @@ export const authService = {
 
 
   async createProfileIfMissing(user: any) {
-    // Check if profile already exists
+    // Use maybeSingle() to avoid throwing if no row exists, and then upsert to avoid conflicts
     const { data: existing, error } = await supabase
       .from('users')
       .select('id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "No rows found" from PostgREST - ignore
-      // For other errors, rethrow
-      // Note: Supabase client error codes may differ; adjust as needed
-      // We'll continue silently to avoid blocking login on a transient error
+    if (error) {
+      // Log and continue - we don't want profile creation errors to block signin
+      // eslint-disable-next-line no-console
+      console.warn('Error checking existing profile', error)
     }
 
     if (!existing) {
@@ -119,7 +119,8 @@ export const authService = {
         }
       }
 
-      await supabase.from('users').insert([{ id: user.id, email: user.email, role }])
+      // Use upsert with onConflict to make this idempotent and avoid 409 errors when concurrent
+      await supabase.from('users').upsert([{ id: user.id, email: user.email, role }], { onConflict: 'id' }).select()
     }
   },
 

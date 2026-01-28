@@ -26,14 +26,35 @@ export default function Signup() {
       return
     }
 
-    setLoading(true)
-
+    // Prevent rapid repeated attempts per-email (simple client-side throttle)
     try {
+      const lastKey = `last_signup_${email}`
+      const last = Number(localStorage.getItem(lastKey) || '0')
+      const now = Date.now()
+      const THROTTLE_MS = 60 * 1000 // 60 seconds
+      if (last && now - last < THROTTLE_MS) {
+        const wait = Math.ceil((THROTTLE_MS - (now - last)) / 1000)
+        setError(`Previše pokušaja. Probaj ponovo za ${wait} sek.`)
+        return
+      }
+
+      setLoading(true)
       await authService.signup(email, password, role)
+      // remember last attempt timestamp so user can't spam signup button
+      try { localStorage.setItem(lastKey, String(Date.now())) } catch (e) {}
+
       // Show friendly page that asks user to check their email
       navigate(`/check-email?email=${encodeURIComponent(email)}`)
     } catch (err: any) {
-      setError(err.message || 'Greška pri registraciji')
+      // Map known Supabase messages to friendly text
+      const msg = err?.message || ''
+      if (/email rate limit/i.test(msg)) {
+        setError('Previše zahteva za potvrdu mejla. Probaj ponovo kasnije.')
+      } else if (/already exists|duplicate|conflict/i.test(msg)) {
+        setError('Nalog sa ovim e‑mailom već postoji. Prijavi se ili resetuj lozinku.')
+      } else {
+        setError(msg || 'Greška pri registraciji')
+      }
     } finally {
       setLoading(false)
     }
