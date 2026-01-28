@@ -18,15 +18,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const isAuthPage = authPages.some(page => location.pathname.startsWith(page))
 
     if (!isAuthPage && !hasChecked) {
-      // Check if there are known accounts and no current session
-      const savedAccounts = sessionManager.getSavedAccounts()
-      
-      if (savedAccounts.length > 0) {
-        // Show account switcher
-        setShowAccountSwitcher(true)
-      }
-
-      setHasChecked(true)
+      // Check if there are known accounts and no current session (async)
+      sessionManager.getSavedAccounts().then((savedAccounts) => {
+        if (savedAccounts.length > 0) {
+          // Show account switcher
+          setShowAccountSwitcher(true)
+        }
+        setHasChecked(true)
+      })
     }
   }, [location.pathname, hasChecked])
 

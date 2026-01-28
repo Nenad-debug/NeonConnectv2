@@ -1,8 +1,15 @@
 import { supabase } from './supabaseClient'
 import { sessionManager } from './sessionManager'
+import { rateLimitService } from './rateLimitService'
 
 export const authService = {
   async signup(email: string, password: string, role: 'candidate' | 'employer') {
+    // SECURITY: Check rate limiting
+    if (!rateLimitService.checkLimit('signup', email)) {
+      const resetTime = rateLimitService.getResetTime('signup', email)
+      throw new Error(`Previše pokušaja. Pokušajte ponovo za ${resetTime} sekundi.`)
+    }
+
     // Try to include role in user_metadata so we can create the profile later when user signs in
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -13,7 +20,9 @@ export const authService = {
       },
     })
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
     // If a session was returned, the user is signed in and we can create the profile now
     if (data.user && data.session) {
@@ -23,9 +32,9 @@ export const authService = {
 
       if (profileError) throw profileError
 
-      // Save to session manager
-      sessionManager.saveAccount(data.user.id, email, role)
-      sessionManager.setCurrentSession({
+      // Save to session manager (ENCRYPTED)
+      await sessionManager.saveAccount(data.user.id, email, role)
+      await sessionManager.setCurrentSession({
         id: data.user.id,
         email,
         role,
@@ -44,12 +53,20 @@ export const authService = {
   },
 
   async login(email: string, password: string) {
+    // SECURITY: Check rate limiting on login attempts
+    if (!rateLimitService.checkLimit('login', email)) {
+      const resetTime = rateLimitService.getResetTime('login', email)
+      throw new Error(`Previše pokušaja prijave. Pokušajte ponovo za ${resetTime} sekundi.`)
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
     // After successful sign-in, ensure profile exists (RLS requires auth.uid() = id)
     if (data.user) {
@@ -62,14 +79,17 @@ export const authService = {
         .eq('id', data.user.id)
         .single()
 
-      // Save to session manager
-      sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate')
-      sessionManager.setCurrentSession({
+      // Save to session manager (ENCRYPTED)
+      await sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate')
+      await sessionManager.setCurrentSession({
         id: data.user.id,
         email,
         role: (userProfile?.role as 'candidate' | 'employer') || 'candidate',
         lastUsed: Date.now(),
       })
+
+      // Clear rate limit on successful login
+      rateLimitService.clearRateLimit('login', email)
     }
 
     return data
@@ -104,13 +124,32 @@ export const authService = {
       const params = new URLSearchParams((hash && hash.startsWith('#') ? hash.slice(1) : '') || search)
       const access_token = params.get('access_token')
       const refresh_token = params.get('refresh_token')
-      if (access_token) {
+      
+      // SECURITY FIX: Validate token format before using (prevents XSS via malformed tokens)
+      const isValidJWTFormat = (token: string): boolean => {
+        if (!token || typeof token !== 'string') return false
+        // JWT format: three base64url parts separated by dots
+        const jwtRegex = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
+        if (!jwtRegex.test(token)) return false
+        // Additional check: token should not contain suspicious characters
+        if (/<|>|"|'|;|%|script|iframe|onerror|onclick/.test(token)) return false
+        return true
+      }
+      
+      if (access_token && isValidJWTFormat(access_token)) {
         // Build a typed payload so we don't pass null to setSession (avoids TypeScript errors)
         // access_token is checked above; ensure refresh_token is always a string to satisfy setSession's type
-        const payload: { access_token: string; refresh_token: string } = { access_token: access_token!, refresh_token: refresh_token ?? '' }
+        const payload: { access_token: string; refresh_token: string } = { 
+          access_token: access_token!, 
+          refresh_token: (refresh_token && isValidJWTFormat(refresh_token)) ? refresh_token : '' 
+        }
         // setSession will populate the client with the authenticated session so getUser works
         await supabase.auth.setSession(payload)
         return true
+      } else if (access_token) {
+        // Token format validation failed - potential attack
+        console.warn('Invalid token format detected in URL parameters')
+        return false
       }
     } catch (e) {
       // ignore
@@ -176,6 +215,12 @@ export const authService = {
 
   // Send password reset email
   async resetPassword(email: string) {
+    // SECURITY: Check rate limiting
+    if (!rateLimitService.checkLimit('resetPassword', email)) {
+      const resetTime = rateLimitService.getResetTime('resetPassword', email)
+      throw new Error(`Previše zahteva za resetovanje lozinke. Pokušajte ponovo za ${resetTime} sekundi.`)
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${import.meta.env.VITE_SITE_URL}/reset-password`,
     })
@@ -184,6 +229,15 @@ export const authService = {
 
   // Update user password
   async updatePassword(newPassword: string) {
+    const user = await this.getCurrentUser()
+    if (!user?.email) throw new Error('No user logged in')
+
+    // SECURITY: Check rate limiting
+    if (!rateLimitService.checkLimit('updatePassword', user.email)) {
+      const resetTime = rateLimitService.getResetTime('updatePassword', user.email)
+      throw new Error(`Previše pokušaja promene lozinke. Pokušajte ponovo za ${resetTime} sekundi.`)
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     if (error) {
       // Supabase vraća specifičnu grešku ako je ista lozinka
@@ -193,8 +247,10 @@ export const authService = {
       throw error
     }
 
+    // Clear rate limit on successful password update
+    rateLimitService.clearRateLimit('updatePassword', user.email)
+
     // Mark this password reset as used so the same link cannot be used again
-    const user = await this.getCurrentUser()
     if (user) {
       try {
         await supabase.from('users').update({ password_reset_used: true, password_reset_at: new Date().toISOString() }).eq('id', user.id)

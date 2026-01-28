@@ -17,11 +17,13 @@ export default function AccountSwitcher({ onAccountSelected, onDismiss }: Accoun
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const accounts = sessionManager.getSavedAccounts()
-    setSavedAccounts(accounts)
-    if (accounts.length > 0) {
-      setSelectedId(accounts[0].id)
-    }
+    // Load saved accounts asynchronously
+    sessionManager.getSavedAccounts().then((accounts) => {
+      setSavedAccounts(accounts)
+      if (accounts.length > 0) {
+        setSelectedId(accounts[0].id)
+      }
+    })
   }, [])
 
   const handleContinue = async () => {
@@ -35,7 +37,7 @@ export default function AccountSwitcher({ onAccountSelected, onDismiss }: Accoun
       
       if (session && session.user.id === selectedId) {
         // Already logged in as this user
-        sessionManager.setCurrentSession(selected)
+        await sessionManager.setCurrentSession(selected)
         onAccountSelected?.(selected)
         navigate(selected.role === 'employer' ? '/dashboard' : '/jobs')
       } else {
@@ -54,9 +56,10 @@ export default function AccountSwitcher({ onAccountSelected, onDismiss }: Accoun
     navigate('/signup')
   }
 
-  const handleRemoveAccount = (accountId: string) => {
-    sessionManager.removeAccount(accountId)
-    setSavedAccounts(sessionManager.getSavedAccounts())
+  const handleRemoveAccount = async (accountId: string) => {
+    await sessionManager.removeAccount(accountId)
+    const updatedAccounts = await sessionManager.getSavedAccounts()
+    setSavedAccounts(updatedAccounts)
   }
 
   return (
@@ -146,7 +149,7 @@ export default function AccountSwitcher({ onAccountSelected, onDismiss }: Accoun
             <details>
               <summary className="cursor-pointer hover:text-slate-500">Debug Info</summary>
               <pre className="mt-2 text-xs bg-slate-950 p-2 rounded overflow-auto max-h-32">
-                {JSON.stringify(sessionManager.getSessionInfo(), null, 2)}
+                Loading...
               </pre>
             </details>
           </div>

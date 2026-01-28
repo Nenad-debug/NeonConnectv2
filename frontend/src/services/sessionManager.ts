@@ -1,4 +1,5 @@
 import { deviceService } from './deviceService'
+import { secureStorage } from './encryptionService'
 
 export interface SavedAccount {
   id: string
@@ -13,11 +14,11 @@ const CURRENT_SESSION_KEY = 'neonconnect_current_session'
 
 export const sessionManager = {
   /**
-   * Save an account to known accounts on this device
+   * Save an account to known accounts on this device (ENCRYPTED)
    */
-  saveAccount(userId: string, email: string, role: 'candidate' | 'employer'): void {
+  async saveAccount(userId: string, email: string, role: 'candidate' | 'employer'): Promise<void> {
     try {
-      const accounts = this.getSavedAccounts()
+      const accounts = await this.getSavedAccounts()
       
       // Check if account already exists
       const existingIndex = accounts.findIndex(acc => acc.id === userId)
@@ -43,19 +44,21 @@ export const sessionManager = {
         accounts.splice(5)
       }
 
-      localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(accounts))
+      // SECURITY FIX: Use encrypted storage
+      await secureStorage.setItem(SAVED_ACCOUNTS_KEY, accounts)
     } catch (error) {
       console.error('Error saving account:', error)
     }
   },
 
   /**
-   * Get all saved accounts for this device
+   * Get all saved accounts for this device (DECRYPTED)
    */
-  getSavedAccounts(): SavedAccount[] {
+  async getSavedAccounts(): Promise<SavedAccount[]> {
     try {
-      const saved = localStorage.getItem(SAVED_ACCOUNTS_KEY)
-      return saved ? JSON.parse(saved) : []
+      // SECURITY FIX: Use encrypted storage
+      const saved = await secureStorage.getItem(SAVED_ACCOUNTS_KEY)
+      return saved ? saved : []
     } catch (error) {
       console.error('Error getting saved accounts:', error)
       return []
@@ -63,12 +66,13 @@ export const sessionManager = {
   },
 
   /**
-   * Get current session (last logged in account)
+   * Get current session (last logged in account) (DECRYPTED)
    */
-  getCurrentSession(): SavedAccount | null {
+  async getCurrentSession(): Promise<SavedAccount | null> {
     try {
-      const session = localStorage.getItem(CURRENT_SESSION_KEY)
-      return session ? JSON.parse(session) : null
+      // SECURITY FIX: Use encrypted storage
+      const session = await secureStorage.getItem(CURRENT_SESSION_KEY)
+      return session ? session : null
     } catch (error) {
       console.error('Error getting current session:', error)
       return null
@@ -76,11 +80,12 @@ export const sessionManager = {
   },
 
   /**
-   * Set current session
+   * Set current session (ENCRYPTED)
    */
-  setCurrentSession(account: SavedAccount): void {
+  async setCurrentSession(account: SavedAccount): Promise<void> {
     try {
-      localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(account))
+      // SECURITY FIX: Use encrypted storage
+      await secureStorage.setItem(CURRENT_SESSION_KEY, account)
     } catch (error) {
       console.error('Error setting current session:', error)
     }
@@ -89,16 +94,16 @@ export const sessionManager = {
   /**
    * Remove account from saved accounts
    */
-  removeAccount(userId: string): void {
+  async removeAccount(userId: string): Promise<void> {
     try {
-      const accounts = this.getSavedAccounts()
+      const accounts = await this.getSavedAccounts()
       const filtered = accounts.filter(acc => acc.id !== userId)
-      localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(filtered))
+      await secureStorage.setItem(SAVED_ACCOUNTS_KEY, filtered)
 
       // Clear current session if it was the removed account
-      const currentSession = this.getCurrentSession()
+      const currentSession = await this.getCurrentSession()
       if (currentSession?.id === userId) {
-        localStorage.removeItem(CURRENT_SESSION_KEY)
+        secureStorage.removeItem(CURRENT_SESSION_KEY)
       }
     } catch (error) {
       console.error('Error removing account:', error)
@@ -110,7 +115,8 @@ export const sessionManager = {
    */
   clearAllSessions(): void {
     try {
-      localStorage.removeItem(CURRENT_SESSION_KEY)
+      secureStorage.removeItem(CURRENT_SESSION_KEY)
+      secureStorage.removeItem(SAVED_ACCOUNTS_KEY)
     } catch (error) {
       console.error('Error clearing sessions:', error)
     }
@@ -119,18 +125,22 @@ export const sessionManager = {
   /**
    * Check if device is known (has any saved accounts)
    */
-  isKnownDevice(): boolean {
-    return this.getSavedAccounts().length > 0
+  async isKnownDevice(): Promise<boolean> {
+    const accounts = await this.getSavedAccounts()
+    return accounts.length > 0
   },
 
   /**
    * Get device info for debugging
    */
-  getSessionInfo() {
+  async getSessionInfo() {
+    const savedAccounts = await this.getSavedAccounts()
+    const currentSession = await this.getCurrentSession()
+    const deviceId = await deviceService.getDeviceId()
     return {
-      deviceId: deviceService.getDeviceId(),
-      savedAccounts: this.getSavedAccounts(),
-      currentSession: this.getCurrentSession(),
+      deviceId,
+      savedAccounts,
+      currentSession,
     }
   },
 }
