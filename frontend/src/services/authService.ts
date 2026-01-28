@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { sessionManager } from './sessionManager'
 
 export const authService = {
   async signup(email: string, password: string, role: 'candidate' | 'employer') {
@@ -21,6 +22,15 @@ export const authService = {
         .insert([{ id: data.user.id, email, role }])
 
       if (profileError) throw profileError
+
+      // Save to session manager
+      sessionManager.saveAccount(data.user.id, email, role)
+      sessionManager.setCurrentSession({
+        id: data.user.id,
+        email,
+        role,
+        lastUsed: Date.now(),
+      })
     } else {
       // No session (email confirmation flow). Save role locally so we can create profile after user confirms and signs in.
       try {
@@ -44,6 +54,22 @@ export const authService = {
     // After successful sign-in, ensure profile exists (RLS requires auth.uid() = id)
     if (data.user) {
       await this.createProfileIfMissing(data.user)
+
+      // Get user role from users table
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+
+      // Save to session manager
+      sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate')
+      sessionManager.setCurrentSession({
+        id: data.user.id,
+        email,
+        role: (userProfile?.role as 'candidate' | 'employer') || 'candidate',
+        lastUsed: Date.now(),
+      })
     }
 
     return data
@@ -51,6 +77,7 @@ export const authService = {
 
   async logout() {
     const { error } = await supabase.auth.signOut()
+    sessionManager.clearAllSessions()
     if (error) throw error
   },
 
