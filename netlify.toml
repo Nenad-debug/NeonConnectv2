@@ -4,3 +4,7 @@
   publish = "dist"
   functions = "../netlify/functions"
   status = 200
+
+# Exclude config files from being treated as functions
+[functions]
+  excluded_patterns = ["*.d.ts", "deno.json", "tsconfig.json"]
