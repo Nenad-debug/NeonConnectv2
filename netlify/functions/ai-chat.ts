@@ -1,43 +1,53 @@
 // Netlify Serverless Function for Google Gemini API
-// Deploy automatically with: netlify deploy
 
-module.exports = async (req: any, res: any) => {
-  console.log('📨 Function invoked')
-  console.log('Method:', req.method)
-  console.log('Headers:', req.headers)
+exports.handler = async (event: any) => {
+  console.log('📨 AI Function invoked')
+  console.log('Method:', event.httpMethod)
   
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    return res.status(200).end()
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: '',
+    }
   }
 
   try {
     // Parse body
-    let body = req.body
+    let body = event.body
     if (typeof body === 'string') {
       body = JSON.parse(body)
     }
     const { message, context, previousMessages } = body
 
-    console.log('📨 Function called with:', { message, context })
+    console.log('📨 Message received:', { message, context })
 
     // Validate input
     if (!message || typeof message !== 'string') {
-      console.error('❌ Invalid message:', message)
-      return res.status(400).json({ error: 'Invalid message' })
+      console.error('❌ Invalid message')
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Invalid message' }),
+      }
     }
 
-    // Get Gemini API key from environment
+    // Get Gemini API key
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY
     if (!apiKey) {
-      console.error('❌ GOOGLE_GEMINI_API_KEY is not set in environment variables')
-      console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE')))
-      return res.status(500).json({ error: 'API key not configured' })
+      console.error('❌ GOOGLE_GEMINI_API_KEY not set')
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'API key not configured' }),
+      }
     }
-    console.log('✅ API key loaded, starting Gemini API call...')
+    console.log('✅ API key found')
 
     // Build conversation history
     const conversationHistory = previousMessages
@@ -108,9 +118,11 @@ module.exports = async (req: any, res: any) => {
 
     if (!response.ok) {
       console.error('❌ Gemini API error:', data)
-      return res.status(response.status).json({
-        error: data.error?.message || 'Gemini API error',
-      })
+      return {
+        statusCode: response.status,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: data.error?.message || 'Gemini API error' }),
+      }
     }
 
     // Extract response text
@@ -119,12 +131,19 @@ module.exports = async (req: any, res: any) => {
       'Извините, нема одговора од AI-а.'
 
     console.log('✅ Gemini response received')
-    return res.status(200).json({ response: responseText })
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ response: responseText }),
+    }
   } catch (error: any) {
     console.error('❌ AI Function error:', error)
-    return res.status(500).json({
-      error: error.message || 'Internal server error',
-      details: error.toString(),
-    })
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: error.message || 'Internal server error',
+      }),
+    }
   }
 }
