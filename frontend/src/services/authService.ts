@@ -8,7 +8,7 @@ export const authService = {
       password,
       options: {
         data: { role },
-        redirectTo: `${import.meta.env.VITE_SITE_URL}/auth/callback`,
+        emailRedirectTo: `${import.meta.env.VITE_SITE_URL}/auth/callback`,
       },
     })
 

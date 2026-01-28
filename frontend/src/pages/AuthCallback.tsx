@@ -12,11 +12,8 @@ export default function AuthCallback() {
 
     async function handle() {
       try {
-        // Try to have supabase process any session info in the URL
-        // This may or may not create a session depending on confirmation flow
-        // Some Supabase builds auto-store session from URL token
-        try { await supabase.auth.getSessionFromUrl({ storeSession: true }) } catch (e) { /* ignore */ }
-
+        // Some Supabase flows store session in the URL; if not, we fall back to checking the current user
+        // NOTE: older/newer SDKs may not expose getSessionFromUrl; avoid calling it directly to keep types compatible
         const user = await authService.getCurrentUser().catch(() => null)
 
         if (!mounted) return
