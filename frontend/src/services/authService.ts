@@ -59,40 +59,73 @@ export const authService = {
       throw new Error(`Previše pokušaja prijave. Pokušajte ponovo za ${resetTime} sekundi.`)
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      throw error
-    }
-
-    // After successful sign-in, ensure profile exists (RLS requires auth.uid() = id)
-    if (data.user) {
-      await this.createProfileIfMissing(data.user)
-
-      // Get user role from users table
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', data.user.id)
-        .single()
-
-      // Save to session manager (ENCRYPTED)
-      await sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate')
-      await sessionManager.setCurrentSession({
-        id: data.user.id,
+    try {
+      console.log('🔵 [AUTH] Login started for:', email)
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        role: (userProfile?.role as 'candidate' | 'employer') || 'candidate',
-        lastUsed: Date.now(),
+        password,
       })
 
-      // Clear rate limit on successful login
-      rateLimitService.clearRateLimit('login', email)
-    }
+      console.log('🔵 [AUTH] Supabase response received')
 
-    return data
+      if (error) {
+        console.error('❌ [AUTH] Login error:', error)
+        throw error
+      }
+
+      // After successful sign-in, ensure profile exists (RLS requires auth.uid() = id)
+      if (data.user) {
+        console.log('✅ [AUTH] User authenticated:', data.user.id)
+        
+        await this.createProfileIfMissing(data.user)
+        console.log('✅ [AUTH] Profile created/verified')
+
+        // Get user role from users table
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        console.log('✅ [AUTH] User profile fetched:', userProfile?.role)
+
+        // Save to session manager (ENCRYPTED) - with timeout protection
+        console.log('🔵 [AUTH] Saving session (with timeout)...')
+        
+        const saveSessionPromise = Promise.all([
+          sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate'),
+          sessionManager.setCurrentSession({
+            id: data.user.id,
+            email,
+            role: (userProfile?.role as 'candidate' | 'employer') || 'candidate',
+            lastUsed: Date.now(),
+          })
+        ])
+        
+        // Set timeout for session saving (3 seconds max)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session save timeout')), 3000)
+        )
+        
+        try {
+          await Promise.race([saveSessionPromise, timeoutPromise])
+          console.log('✅ [AUTH] Session saved successfully')
+        } catch (timeoutError) {
+          console.warn('⚠️ [AUTH] Session save timeout, continuing anyway...', timeoutError)
+          // Continue anyway - session will be saved eventually
+        }
+
+        // Clear rate limit on successful login
+        rateLimitService.clearRateLimit('login', email)
+        console.log('✅ [AUTH] Login complete!')
+      }
+
+      return data
+    } catch (error) {
+      console.error('💥 [AUTH] Login failed:', error)
+      throw error
+    }
   },
 
   async logout() {

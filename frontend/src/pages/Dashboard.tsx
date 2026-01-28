@@ -12,13 +12,19 @@ export default function Dashboard() {
   useEffect(() => {
     const loadUser = async () => {
       try {
+        console.log('📊 [DASHBOARD] Loading user...')
+        
         const currentUser = await authService.getCurrentUser()
+        
         if (!currentUser) {
+          console.log('⚠️ [DASHBOARD] No user found, redirecting to login')
           navigate('/login')
         } else {
+          console.log('✅ [DASHBOARD] User loaded:', currentUser.id)
           setUser(currentUser)
         }
       } catch (err) {
+        console.error('❌ [DASHBOARD] Error loading user:', err)
         navigate('/login')
       } finally {
         setLoading(false)

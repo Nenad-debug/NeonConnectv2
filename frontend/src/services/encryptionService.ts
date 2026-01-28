@@ -2,6 +2,8 @@
  * SECURITY: Encryption service for sensitive localStorage data
  * Protects session data and account information from XSS attacks
  * Uses SubtleCrypto API (native browser Web Crypto API - no external dependency)
+ * 
+ * FALLBACK: If encryption fails (e.g., private mode), uses base64 encoding as fallback
  */
 
 const ENCRYPTION_ALGORITHM = {
@@ -10,6 +12,31 @@ const ENCRYPTION_ALGORITHM = {
 }
 
 const IV_LENGTH = 12 // 96 bits for GCM
+let ENCRYPTION_AVAILABLE = true // Will be set to false if crypto API fails
+const FALLBACK_PREFIX = 'BASE64_FALLBACK_' // Prefix for fallback storage
+
+/**
+ * Simple base64 encode for fallback when encryption unavailable
+ */
+function encodeBase64(str: string): string {
+  try {
+    return 'BASE64:' + btoa(unescape(encodeURIComponent(str)))
+  } catch (e) {
+    return str
+  }
+}
+
+/**
+ * Simple base64 decode for fallback
+ */
+function decodeBase64(str: string): string {
+  try {
+    if (!str.startsWith('BASE64:')) return str
+    return decodeURIComponent(escape(atob(str.slice(7))))
+  } catch (e) {
+    return str
+  }
+}
 
 /**
  * Generate or retrieve encryption key from device storage
@@ -158,28 +185,71 @@ export async function decryptData(encryptedData: string): Promise<any> {
  */
 export const secureStorage = {
   /**
-   * Store encrypted data
+   * Store encrypted data with fallback to base64 if crypto unavailable
    */
   async setItem(key: string, data: any): Promise<void> {
+    console.log('🔐 [SECURE_STORAGE] Setting:', key)
+    
     try {
-      const encrypted = await encryptData(data)
-      localStorage.setItem(key, encrypted)
+      // Try with encryption first
+      if (ENCRYPTION_AVAILABLE) {
+        try {
+          const encrypted = await encryptData(data)
+          localStorage.setItem(`enc_${key}`, encrypted)
+          console.log('✅ [SECURE_STORAGE] Encrypted storage successful')
+          return
+        } catch (encError) {
+          console.warn('⚠️ [SECURE_STORAGE] Encryption failed, using fallback:', encError)
+          ENCRYPTION_AVAILABLE = false // Disable encryption for this session
+        }
+      }
+      
+      // Fallback: base64 encoding
+      const encoded = encodeBase64(JSON.stringify(data))
+      localStorage.setItem(`${FALLBACK_PREFIX}${key}`, encoded)
+      console.log('✅ [SECURE_STORAGE] Fallback storage successful')
     } catch (error) {
-      console.error('Secure storage set failed:', error)
+      console.error('❌ [SECURE_STORAGE] Failed to set item:', error)
       throw error
     }
   },
 
   /**
-   * Retrieve and decrypt data
+   * Retrieve and decrypt data - checks encrypted and fallback storage
    */
   async getItem(key: string): Promise<any> {
+    console.log('🔐 [SECURE_STORAGE] Getting:', key)
+    
     try {
-      const encrypted = localStorage.getItem(key)
-      if (!encrypted) return null
-      return await decryptData(encrypted)
+      // First check for encrypted data
+      const encrypted = localStorage.getItem(`enc_${key}`)
+      if (encrypted) {
+        try {
+          const decrypted = await decryptData(encrypted)
+          console.log('✅ [SECURE_STORAGE] Decrypted successfully')
+          return decrypted
+        } catch (decError) {
+          console.warn('⚠️ [SECURE_STORAGE] Decryption failed:', decError)
+        }
+      }
+      
+      // Check for fallback data
+      const fallback = localStorage.getItem(`${FALLBACK_PREFIX}${key}`)
+      if (fallback) {
+        try {
+          const decoded = decodeBase64(fallback)
+          const parsed = JSON.parse(decoded)
+          console.log('✅ [SECURE_STORAGE] Fallback retrieved successfully')
+          return parsed
+        } catch (parseError) {
+          console.warn('⚠️ [SECURE_STORAGE] Fallback parse failed:', parseError)
+        }
+      }
+      
+      console.log('⚠️ [SECURE_STORAGE] No data found for key:', key)
+      return null
     } catch (error) {
-      console.error('Secure storage get failed:', error)
+      console.error('❌ [SECURE_STORAGE] Failed to get item:', error)
       return null
     }
   },
@@ -188,13 +258,28 @@ export const secureStorage = {
    * Remove item from storage
    */
   removeItem(key: string): void {
-    localStorage.removeItem(key)
+    console.log('🔐 [SECURE_STORAGE] Removing:', key)
+    
+    localStorage.removeItem(`enc_${key}`)
+    localStorage.removeItem(`${FALLBACK_PREFIX}${key}`)
+    console.log('✅ [SECURE_STORAGE] Removed successfully')
   },
 
   /**
    * Clear all stored data
    */
   clear(): void {
-    localStorage.clear()
+    console.log('🔐 [SECURE_STORAGE] Clearing all')
+    
+    const keysToRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('enc_') || key?.startsWith(FALLBACK_PREFIX)) {
+        keysToRemove.push(key)
+      }
+    }
+    
+    keysToRemove.forEach(key => localStorage.removeItem(key))
+    console.log('✅ [SECURE_STORAGE] Clear complete')
   },
 }

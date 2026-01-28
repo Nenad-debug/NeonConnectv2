@@ -15,11 +15,26 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    
+    console.log('🚀 [LOGIN] Login attempt started')
 
     try {
-      await authService.login(email, password)
+      console.log('📧 [LOGIN] Email:', email)
+      console.log('🔐 [LOGIN] Calling authService.login()...')
+      
+      const result = await authService.login(email, password)
+      
+      console.log('✅ [LOGIN] Login successful, result:', result)
+      console.log('⏳ [LOGIN] Waiting for session to persist...')
+      
+      // Wait additional time to ensure session is properly saved
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      console.log('📍 [LOGIN] Navigating to /dashboard...')
+      
       navigate('/dashboard')
     } catch (err: any) {
+      console.error('❌ [LOGIN] Login failed:', err)
       setError(err.message || 'Greška pri prijavi')
     } finally {
       setLoading(false)

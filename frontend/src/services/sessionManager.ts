@@ -18,6 +18,8 @@ export const sessionManager = {
    */
   async saveAccount(userId: string, email: string, role: 'candidate' | 'employer'): Promise<void> {
     try {
+      console.log('💾 [SESSION_MGR] saveAccount:', { userId, email, role })
+      
       const accounts = await this.getSavedAccounts()
       
       // Check if account already exists
@@ -46,8 +48,9 @@ export const sessionManager = {
 
       // SECURITY FIX: Use encrypted storage
       await secureStorage.setItem(SAVED_ACCOUNTS_KEY, accounts)
+      console.log('✅ [SESSION_MGR] Account saved successfully')
     } catch (error) {
-      console.error('Error saving account:', error)
+      console.error('❌ [SESSION_MGR] Error saving account:', error)
     }
   },
 
@@ -70,11 +73,20 @@ export const sessionManager = {
    */
   async getCurrentSession(): Promise<SavedAccount | null> {
     try {
+      console.log('🔍 [SESSION_MGR] Getting current session...')
+      
       // SECURITY FIX: Use encrypted storage
       const session = await secureStorage.getItem(CURRENT_SESSION_KEY)
+      
+      if (session) {
+        console.log('✅ [SESSION_MGR] Current session found:', session.id)
+      } else {
+        console.log('⚠️ [SESSION_MGR] No current session found')
+      }
+      
       return session ? session : null
     } catch (error) {
-      console.error('Error getting current session:', error)
+      console.error('❌ [SESSION_MGR] Error getting current session:', error)
       return null
     }
   },
@@ -84,10 +96,14 @@ export const sessionManager = {
    */
   async setCurrentSession(account: SavedAccount): Promise<void> {
     try {
+      console.log('💾 [SESSION_MGR] setCurrentSession:', account.id)
+      
       // SECURITY FIX: Use encrypted storage
       await secureStorage.setItem(CURRENT_SESSION_KEY, account)
+      
+      console.log('✅ [SESSION_MGR] Current session set successfully')
     } catch (error) {
-      console.error('Error setting current session:', error)
+      console.error('❌ [SESSION_MGR] Error setting current session:', error)
     }
   },
 
