@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Потврди твој налог - NeonConnect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 20px;
+            color: #e2e8f0;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+        
+        .logo-accent {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Content */
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+        
+        .description {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+        }
+        
+        /* CTA Button */
+        .cta-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 30px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        
+        .info-box strong {
+            color: #60a5fa;
+        }
+        
+        /* Manual Link */
+        .manual-link {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        
+        .manual-link a {
+            color: #60a5fa;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        /* Footer */
+        .footer {
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .footer-links {
+            margin-bottom: 15px;
+        }
+        
+        .footer-links a {
+            color: #60a5fa;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        
+        .footer-text {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .divider {
+            display: inline-block;
+            margin: 0 5px;
+            color: #475569;
+        }
+        
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .container {
+                border-radius: 8px;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .greeting {
+                font-size: 20px;
+            }
+            
+            .cta-button {
+                padding: 14px 30px;
+                font-size: 15px;
+            }
+            
+            .footer-links a {
+                display: block;
+                margin: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                NEON<span class="logo-accent">CONNECT</span>
+            </div>
+            <p style="font-size: 14px; opacity: 0.9; margin-top: 8px;">Твоја платформа за савршену каријеру</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">Добродошао/ла на NeonConnect! 👋</div>
+            
+            <div class="description">
+                Захвалан ти што си се регистровао/ла. Да бисмо окончали регистрацију твог налога, морамо да потврдимо твоју e-mail адресу. 
+                <br><br>
+                <strong>Кликни на дугме испод да потвриди твој налог:</strong>
+            </div>
+            
+            <!-- CTA Button -->
+            <div class="cta-container">
+                <a href="{{ .ConfirmationURL }}" class="cta-button">
+                    Потврди твој налог
+                </a>
+            </div>
+            
+            <!-- Info Box -->
+            <div class="info-box">
+                <strong>⏰ Важно:</strong> Овај линк је валидан 24 часа. По истеку времена, требаће да затражиш нову потврду.
+            </div>
+            
+            <!-- Manual Link -->
+            <div class="manual-link">
+                <strong>Не видиш дугме?</strong> Копирај и налепи овај линк у своју адресну траку браузера:
+                <br><br>
+                <a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-links">
+                <a href="https://neonconnect.rs/terms">Услови коришћења</a>
+                <span class="divider">•</span>
+                <a href="https://neonconnect.rs/privacy">Приватност</a>
+                <span class="divider">•</span>
+                <a href="https://neonconnect.rs/contact">Контакт</a>
+            </div>
+            
+            <div class="footer-text">
+                © 2026 NeonConnect. Сва права су заштићена. 
+                <br>
+                Направљено са ❤️ за твоју каријеру.
+            </div>
+            
+            <div class="footer-text" style="font-size: 12px; opacity: 0.7;">
+                Ако ниси регистровао/ла овај налог, слободно игнориши ову поруку.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
