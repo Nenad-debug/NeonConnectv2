@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '../services/authService'
+import { profileService } from '../services/profileService'
 import Background from '../components/common/Background'
 import ApplicationsList from '../components/candidate/ApplicationsList'
 import SavedJobs from '../components/candidate/SavedJobs'
 import RecommendedJobs from '../components/candidate/RecommendedJobs'
 import ProfileQuickView from '../components/candidate/ProfileQuickView'
 import Notifications from '../components/candidate/Notifications'
+import ProfileSetup from '../components/candidate/ProfileSetup'
 import { TrendingUp, Briefcase, Heart, Sparkles, LogOut } from 'lucide-react'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
+  const [showProfileSetup, setShowProfileSetup] = useState(false)
+  const [profileComplete, setProfileComplete] = useState(true)
+  const [savingProfile, setSavingProfile] = useState(false)
   const navigate = useNavigate()
 
   // Mock data - kasnije iz baze
@@ -115,6 +120,15 @@ export default function Dashboard() {
         } else {
           console.log('✅ [DASHBOARD] User loaded:', currentUser.id)
           setUser(currentUser)
+
+          // Check if profile is complete
+          const isComplete = await profileService.isProfileComplete(currentUser.id)
+          setProfileComplete(isComplete)
+          
+          if (!isComplete) {
+            console.log('⚠️ [DASHBOARD] Profile not complete, showing setup')
+            setShowProfileSetup(true)
+          }
         }
       } catch (err) {
         console.error('❌ [DASHBOARD] Error loading user:', err)
@@ -135,6 +149,26 @@ export default function Dashboard() {
     }
   }
 
+  const handleProfileSetupComplete = async (profileData: any) => {
+    if (!user) return
+
+    setSavingProfile(true)
+    try {
+      console.log('💾 [DASHBOARD] Saving profile setup...')
+      
+      await profileService.saveCandidateProfile(user.id, profileData)
+      
+      setShowProfileSetup(false)
+      setProfileComplete(true)
+      console.log('✅ [DASHBOARD] Profile setup completed')
+    } catch (err: any) {
+      console.error('❌ [DASHBOARD] Profile setup error:', err)
+      throw new Error(err.message || 'Greška pri čuvanju profila')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
@@ -151,6 +185,13 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8">
       <Background />
+
+      {/* Profile Setup Modal */}
+      <ProfileSetup
+        isOpen={showProfileSetup}
+        user={user}
+        onComplete={handleProfileSetupComplete}
+      />
 
       <div className="relative max-w-7xl mx-auto px-4 space-y-8">
         {/* ===== HEADER SECTION ===== */}
