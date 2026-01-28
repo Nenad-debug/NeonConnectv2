@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { statsService } from '../../services/statsService'
+import Counter from './Counter'
 
 interface Stats {
   activeUsers: number
@@ -39,34 +40,35 @@ export default function StatsSection() {
 
   const statItems = [
     { 
-      number: stats.activeUsers > 0 ? stats.activeUsers : '5000+', 
+      number: stats.activeUsers.toString() || '5000+', 
       label: 'Aktivnih korisnika' 
     },
     { 
-      number: stats.activeJobs > 0 ? stats.activeJobs : '800+', 
+      number: stats.activeJobs.toString() || '800+', 
       label: 'Otvorenih poslova' 
     },
     { 
-      number: stats.verifiedCompanies > 0 ? stats.verifiedCompanies : '150+', 
+      number: stats.verifiedCompanies.toString() || '150+', 
       label: 'Verifikovanih kompanija' 
-    },
-    { 
-      number: `${stats.satisfactionRate}%`, 
-      label: 'Stopa zadovoljstva' 
     },
   ]
 
   return (
     <section className="py-20 px-4 bg-slate-800/30 relative">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-center justify-items-center">
           {statItems.map((stat, idx) => (
             <div 
               key={idx} 
               className={`space-y-2 transition-opacity duration-300 ${isLoading ? 'opacity-75' : 'opacity-100'}`}
             >
               <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                {stat.number}
+                {typeof stat.number === 'string' && stat.number.includes('%') 
+                  ? stat.number 
+                  : !isLoading && parseInt(stat.number) > 0
+                  ? <Counter end={parseInt(stat.number)} duration={2000} />
+                  : stat.number
+                }
               </p>
               <p className="text-slate-300">{stat.label}</p>
             </div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Briefcase, Users, Zap, Shield, ArrowRight, Mail, X } from 'lucide-react'
 import Background from '../components/common/Background'
 import StatsSection from '../components/common/StatsSection'
+import SocialProof from '../components/common/SocialProof'
 
 export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false)
@@ -68,18 +69,7 @@ export default function Home() {
             </div>
 
             {/* Social proof */}
-            <div className="flex items-center gap-6 pt-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <div className="flex -space-x-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-slate-900 flex items-center justify-center text-sm font-bold">
-                    {i + 1}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-slate-300">
-                <span className="font-semibold text-white">5000+</span> korisnika koristi NeonConnect
-              </p>
-            </div>
+            <SocialProof />
           </div>
 
           {/* Right: Featured Jobs Card */}
