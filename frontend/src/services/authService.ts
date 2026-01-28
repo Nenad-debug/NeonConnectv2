@@ -146,5 +146,40 @@ export const authService = {
     }
     return false
   },
+
+  // Send password reset email
+  async resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${import.meta.env.VITE_SITE_URL}/reset-password`,
+    })
+    if (error) throw error
+  },
+
+  // Update user password
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+
+    // Mark this password reset as used so the same link cannot be used again
+    const user = await this.getCurrentUser()
+    if (user) {
+      await supabase.from('users').update({ password_reset_used: true, password_reset_at: new Date().toISOString() }).eq('id', user.id)
+    }
+  },
+
+  // Check if password reset token has already been used
+  async checkPasswordResetUsed(user: any) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('password_reset_used')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (error || !data) {
+      return false
+    }
+
+    return data.password_reset_used === true
+  },
 }
 

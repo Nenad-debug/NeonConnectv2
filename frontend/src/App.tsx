@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard'
 import PostJob from './pages/PostJob'
 import CheckEmail from './pages/CheckEmail'
 import AuthCallback from './pages/AuthCallback'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/post-job" element={<PostJob />} />
             <Route path="/check-email" element={<CheckEmail />} />
