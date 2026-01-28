@@ -16,10 +16,27 @@ export default function AuthCallback() {
         const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
         const isConfirmationFlow = searchParams.get('type') === 'signup' || searchParams.has('access_token') || hashParams.has('access_token')
 
-        // Try to restore session from URL tokens if present; this allows getUser to return the confirmed user
-        await authService.restoreSessionFromUrl().catch(() => {})
+        // eslint-disable-next-line no-console
+        console.log('AuthCallback - URL:', window.location.href)
+        // eslint-disable-next-line no-console
+        console.log('AuthCallback - isConfirmationFlow:', isConfirmationFlow, 'searchParams:', Array.from(searchParams.entries()), 'hashParams:', Array.from(hashParams.entries()))
 
-        const user = await authService.getCurrentUser().catch(() => null)
+        // Try to restore session from URL tokens if present; this allows getUser to return the confirmed user
+        const restored = await authService.restoreSessionFromUrl().catch((e) => {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to restore session from URL:', e)
+          return false
+        })
+        // eslint-disable-next-line no-console
+        console.log('AuthCallback - session restored:', restored)
+
+        const user = await authService.getCurrentUser().catch((e) => {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to get current user:', e)
+          return null
+        })
+        // eslint-disable-next-line no-console
+        console.log('AuthCallback - current user:', user?.email || 'none')
 
         if (!mounted) return
 
@@ -47,6 +64,8 @@ export default function AuthCallback() {
           setMessage('Uspešna potvrda mejla. Molimo prijavi se.')
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('AuthCallback error:', err)
         setMessage('Došlo je do greške pri verifikacijom. Molimo pokušaj ponovo.')
       }
     }

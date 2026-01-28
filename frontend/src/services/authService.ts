@@ -169,7 +169,11 @@ export const authService = {
     // Mark this password reset as used so the same link cannot be used again
     const user = await this.getCurrentUser()
     if (user) {
-      await supabase.from('users').update({ password_reset_used: true, password_reset_at: new Date().toISOString() }).eq('id', user.id).catch(() => {})
+      try {
+        await supabase.from('users').update({ password_reset_used: true, password_reset_at: new Date().toISOString() }).eq('id', user.id)
+      } catch (e) {
+        // ignore update errors
+      }
     }
   },
 
