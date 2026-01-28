@@ -2,8 +2,5 @@
   base = "frontend"
   command = "npm ci && npm run build"
   publish = "dist"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
+  functions = "../netlify/functions"
   status = 200
