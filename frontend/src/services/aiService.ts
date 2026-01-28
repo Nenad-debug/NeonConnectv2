@@ -20,7 +20,10 @@ export const aiService = {
       console.log('🤖 [AI SERVICE] Sending message to Gemini API')
 
       // Call Netlify serverless function
-      const response = await fetch('/.netlify/functions/ai-chat', {
+      const functionUrl = '/.netlify/functions/ai-chat'
+      console.log('📍 [AI SERVICE] Calling function at:', functionUrl)
+      
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,14 +36,22 @@ export const aiService = {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        console.error('❌ [AI SERVICE] Function error:', error)
+        console.error('❌ [AI SERVICE] Response not OK, status:', response.status)
+        let errorData: any = {}
+        try {
+          errorData = await response.json()
+        } catch (e) {
+          const text = await response.text()
+          console.error('❌ [AI SERVICE] Response text:', text)
+          return `AI greška (status ${response.status}): ${text || 'Unknown error'}`
+        }
+        console.error('❌ [AI SERVICE] Function error:', errorData)
         
         if (response.status === 404) {
           return `Hmm, AI asistent nije dostupan (serverless funkcija nije deployovana).`
         }
         
-        throw new Error(`AI Service error: ${error.error || error.message || 'Unknown error'}`)
+        throw new Error(`AI Service error: ${errorData.error || errorData.message || 'Unknown error'}`)
       }
 
       const data = await response.json()
