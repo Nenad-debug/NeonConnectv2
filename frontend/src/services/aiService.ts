@@ -19,35 +19,42 @@ export const aiService = {
     try {
       console.log('🤖 [AI SERVICE] Sending message to Gemini API')
 
-      // Call Supabase Edge Function which handles Gemini API safely
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: {
+      // Call Netlify serverless function
+      const response = await fetch('/.netlify/functions/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           message: userMessage,
           context,
           previousMessages: previousMessages || [],
-        },
+        }),
       })
 
-      if (error) {
-        // Check if function exists
-        if (error.message?.includes('ai-chat') || error.message?.includes('404')) {
-          console.warn('⚠️ [AI SERVICE] Edge Function not deployed yet - returning placeholder response')
-          return `Hmm, AI asistent nije dostupan (Edge Function nije deployovan). Trebate da pokrenete: supabase functions deploy ai-chat`
-        }
+      if (!response.ok) {
+        const error = await response.json()
         console.error('❌ [AI SERVICE] Function error:', error)
-        throw new Error(`AI Service error: ${error.message}`)
+        
+        if (response.status === 404) {
+          return `Hmm, AI asistent nije dostupan (serverless funkcija nije deployovana).`
+        }
+        
+        throw new Error(`AI Service error: ${error.error || error.message || 'Unknown error'}`)
       }
 
+      const data = await response.json()
       console.log('✅ [AI SERVICE] Response received')
       return data.response
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Error:', err)
       
-      // Fallback for missing Edge Function
-      if (err.message?.includes('ai-chat')) {
-        return `AI asistent nije dostupan. Prvo trebate da deployujete Edge Function.`
+      // Fallback for missing function
+      if (err.message?.includes('404') || err.message?.includes('fetch')) {
+        return `AI asistent nije dostupan. Pokušajte sa osvežavanjem stranice.`
       }
       
+
       throw new Error(err.message || 'Greška pri komunikaciji sa AI asistentom')
     }
   },
