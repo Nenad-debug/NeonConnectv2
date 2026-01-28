@@ -1,5 +1,5 @@
 import { useLocation, Link } from 'react-router-dom'
-import { Mail, CheckCircle, ArrowRight, AlertCircle } from 'lucide-react'
+import { Mail, ArrowRight, AlertCircle } from 'lucide-react'
 import Background from '../components/common/Background'
 
 export default function CheckEmail() {
