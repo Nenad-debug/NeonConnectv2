@@ -4,4 +4,3 @@
   publish = "dist"
   functions = "../netlify/functions"
   status = 200
-  ignored_patterns = ["*.d.ts", "deno.json", "tsconfig.json"]
