@@ -1,7 +1,7 @@
 // Netlify Serverless Function for Google Gemini API
 // Deploy automatically with: netlify deploy
 
-export default async (event: any) => {
+module.exports = async (event: any) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
