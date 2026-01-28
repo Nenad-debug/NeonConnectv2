@@ -60,6 +60,14 @@ export default function ResetPassword() {
       return
     }
 
+    // Dodatna provera: lozinka ne sme biti samo brojevi ili samo znakovi
+    const hasLetters = /[a-zA-Z]/.test(password)
+    const hasNumbers = /[0-9]/.test(password)
+    if (!hasLetters || !hasNumbers) {
+      setError('Lozinka mora sadržati i slova i brojeve')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -67,7 +75,13 @@ export default function ResetPassword() {
       setMessage('Lozinka je uspešno promenjena! Preusmeravam na prijavu...')
       setTimeout(() => navigate('/login'), 1500)
     } catch (err: any) {
-      setError(err.message || 'Greška pri promeni lozinke')
+      const errorMsg = err.message || 'Greška pri promeni lozinke'
+      // Prikaži korisnu poruku ako je ista lozinka
+      if (errorMsg.includes('different')) {
+        setError('Nova lozinka mora biti drugačita od stare lozinke')
+      } else {
+        setError(errorMsg)
+      }
     } finally {
       setLoading(false)
     }

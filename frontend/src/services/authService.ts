@@ -155,16 +155,32 @@ export const authService = {
     if (error) throw error
   },
 
-  // Update user password
+  // Update user password via serverless function (safer, includes validation)
   async updatePassword(newPassword: string) {
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) throw error
+    // Get current auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-    // Mark this password reset as used so the same link cannot be used again
-    const user = await this.getCurrentUser()
-    if (user) {
-      await supabase.from('users').update({ password_reset_used: true, password_reset_at: new Date().toISOString() }).eq('id', user.id)
+    if (sessionError || !session?.access_token) {
+      throw new Error('Nije moguće pristupiti sesiji')
     }
+
+    // Call serverless function to change password (safer backend validation)
+    const response = await fetch('/.netlify/functions/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ newPassword }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Greška pri promeni lozinke')
+    }
+
+    return result
   },
 
   // Check if password reset token has already been used
