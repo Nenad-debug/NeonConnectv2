@@ -223,13 +223,17 @@ export const authService = {
 
       // If candidate, also create candidate_profiles record
       if (role === 'candidate') {
-        await supabase.from('candidate_profiles').insert([{
-          user_id: user.id,
-          first_name: '',
-          last_name: '',
-          profile_complete: false,
-        }]).select()
-        .catch(() => {}) // Ignore if already exists
+        // Try to create candidate profile, but don't fail if it already exists
+        try {
+          await supabase.from('candidate_profiles').insert([{
+            user_id: user.id,
+            first_name: '',
+            last_name: '',
+            profile_complete: false,
+          }]).select()
+        } catch (e) {
+          // Ignore if already exists
+        }
       }
     }
   },
