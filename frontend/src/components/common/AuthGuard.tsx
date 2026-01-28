@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { sessionManager } from '../services/sessionManager'
-import AccountSwitcher from './common/AccountSwitcher'
+import { sessionManager } from '../../services/sessionManager'
+import AccountSwitcher from './AccountSwitcher'
 
 interface AuthGuardProps {
   children: React.ReactNode
