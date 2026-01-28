@@ -367,11 +367,11 @@ export default function Home() {
                 <h4 className="font-bold text-white text-lg">📋 10 Koraka za Testiranje:</h4>
                 <ol className="space-y-2 text-sm">
                   <li><span className="font-semibold text-blue-300">1.</span> Otvorite sajtи proverite glavni ekran</li>
-                  <li><span className="font-semibold text-blue-300">2.</span> Registrujte se kao KANDIDAT sa email: draga.test1@gmail.com</li>
-                  <li><span className="font-semibold text-blue-300">3.</span> Proverite email potvrdu</li>
+                  <li><span className="font-semibold text-blue-300">2.</span> Registrujte se kao KANDIDAT sa SVOJOM email adresom</li>
+                  <li><span className="font-semibold text-blue-300">3.</span> Proverite email potvrdu (trebalo bi da stigne kod)</li>
                   <li><span className="font-semibold text-blue-300">4.</span> Prijavite se sa tom email adresom</li>
                   <li><span className="font-semibold text-blue-300">5.</span> Odjavite se i vratite se (trebalo bi Account Switcher)</li>
-                  <li><span className="font-semibold text-blue-300">6.</span> Registrujte se kao POSLODAVAC sa: draga.test2@gmail.com</li>
+                  <li><span className="font-semibold text-blue-300">6.</span> Registrujte se kao POSLODAVAC sa DRUGOM email adresom</li>
                   <li><span className="font-semibold text-blue-300">7.</span> Objavite novi posao</li>
                   <li><span className="font-semibold text-blue-300">8.</span> Proverite da li se posao vidi na Jobs stranici</li>
                   <li><span className="font-semibold text-blue-300">9.</span> Proverite statistiku (trebalo bi 2 korisnika, 1 posao)</li>
@@ -380,10 +380,10 @@ export default function Home() {
               </div>
 
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-sm">
-                <p className="font-semibold text-blue-300 mb-2">🔑 Test Email Adrese:</p>
-                <p className="font-mono text-xs bg-slate-800/50 p-2 rounded mb-2">draga.test1@gmail.com</p>
-                <p className="font-mono text-xs bg-slate-800/50 p-2 rounded">draga.test2@gmail.com</p>
-                <p className="text-xs mt-2">Lozinka: <span className="font-mono">TestPassword123!</span></p>
+                <p className="font-semibold text-blue-300 mb-2">🔑 Koristi Svoju Email Adresu:</p>
+                <p className="text-xs text-slate-300 mb-2">Koristi tvoju PRAVU email adresu kako bi mogla da primi kod za potvrdu!</p>
+                <p className="font-mono text-xs bg-slate-800/50 p-2 rounded mb-2">Tvoja email adresa (pravi email)</p>
+                <p className="text-xs mt-2">Lozinka: <span className="font-mono">TestPassword123!</span> ili što god želiš</p>
               </div>
 
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm">
