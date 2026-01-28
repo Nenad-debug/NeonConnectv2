@@ -220,6 +220,17 @@ export const authService = {
 
       // Use upsert with onConflict to make this idempotent and avoid 409 errors when concurrent
       await supabase.from('users').upsert([{ id: user.id, email: user.email, role }], { onConflict: 'id' }).select()
+
+      // If candidate, also create candidate_profiles record
+      if (role === 'candidate') {
+        await supabase.from('candidate_profiles').insert([{
+          user_id: user.id,
+          first_name: '',
+          last_name: '',
+          profile_complete: false,
+        }]).select()
+        .catch(() => {}) // Ignore if already exists
+      }
     }
   },
 
