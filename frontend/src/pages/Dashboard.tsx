@@ -16,8 +16,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
   const [showProfileSetup, setShowProfileSetup] = useState(false)
-  const [profileComplete, setProfileComplete] = useState(true)
-  const [savingProfile, setSavingProfile] = useState(false)
   const navigate = useNavigate()
 
   // Mock data - kasnije iz baze
@@ -123,7 +121,6 @@ export default function Dashboard() {
 
           // Check if profile is complete
           const isComplete = await profileService.isProfileComplete(currentUser.id)
-          setProfileComplete(isComplete)
           
           if (!isComplete) {
             console.log('⚠️ [DASHBOARD] Profile not complete, showing setup')
@@ -152,20 +149,16 @@ export default function Dashboard() {
   const handleProfileSetupComplete = async (profileData: any) => {
     if (!user) return
 
-    setSavingProfile(true)
     try {
       console.log('💾 [DASHBOARD] Saving profile setup...')
       
       await profileService.saveCandidateProfile(user.id, profileData)
       
       setShowProfileSetup(false)
-      setProfileComplete(true)
       console.log('✅ [DASHBOARD] Profile setup completed')
     } catch (err: any) {
       console.error('❌ [DASHBOARD] Profile setup error:', err)
       throw new Error(err.message || 'Greška pri čuvanju profila')
-    } finally {
-      setSavingProfile(false)
     }
   }
 
