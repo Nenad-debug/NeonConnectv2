@@ -1,8 +1,26 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Briefcase, Users, TrendingUp, ArrowRight, Check, Zap, Shield, Target } from 'lucide-react'
+import { Briefcase, Users, Zap, Shield, ArrowRight, Mail, X } from 'lucide-react'
 import Background from '../components/common/Background'
 
 export default function Home() {
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactForm, setContactForm] = useState({ email: '', subject: '', message: '' })
+  const [contactLoading, setContactLoading] = useState(false)
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setContactLoading(true)
+    
+    // Simulate email sending - u budućnosti može biti Supabase Edge Function ili external API
+    setTimeout(() => {
+      setContactLoading(false)
+      setShowContactModal(false)
+      setContactForm({ email: '', subject: '', message: '' })
+      alert('Hvala na poruci! Odgovorićemo vam uskoro.')
+    }, 1500)
+  }
+
   return (
     <div className="min-h-screen gradient-bg text-white relative overflow-hidden">
       <Background />
@@ -201,6 +219,114 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ===== CONTACT SECTION ===== */}
+      <section className="py-20 px-4 relative">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative group">
+            {/* Gradient border background */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            
+            {/* Content card */}
+            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 md:p-12 space-y-6">
+              <div className="flex items-center gap-4">
+                <Mail className="w-10 h-10 text-blue-400" />
+                <h2 className="text-3xl md:text-4xl font-bold">Kontaktiraj nas</h2>
+              </div>
+              
+              <p className="text-lg text-slate-300">
+                Imaš pitanja ili povratne informacije? Slobodno nam piši! Odgovor ćeš dobiti u roku od 24 sata.
+              </p>
+
+              <button 
+                onClick={() => setShowContactModal(true)}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-bold text-white hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105"
+              >
+                Pošalji poruku
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 w-full max-w-md space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold">Pošalji nam poruku</h3>
+              <button 
+                onClick={() => setShowContactModal(false)}
+                className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300">Email *</label>
+                <input 
+                  type="email"
+                  required
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                  placeholder="tvoj@email.com"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                />
+              </div>
+
+              {/* Subject */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300">Tema *</label>
+                <input 
+                  type="text"
+                  required
+                  value={contactForm.subject}
+                  onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                  placeholder="Šta te zanima?"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                />
+              </div>
+
+              {/* Message */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300">Poruka *</label>
+                <textarea 
+                  required
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                  placeholder="Napiši svoju poruku ovde..."
+                  rows={4}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 resize-none"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowContactModal(false)}
+                  className="flex-1 px-4 py-3 border border-slate-700/50 rounded-lg font-semibold text-white hover:bg-slate-800/50 transition-colors"
+                >
+                  Otkaži
+                </button>
+                <button 
+                  type="submit"
+                  disabled={contactLoading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-semibold text-white hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {contactLoading ? 'Slanje...' : 'Pošalji'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ===== CTA SECTION ===== */}
       <section className="py-20 px-4 relative">
