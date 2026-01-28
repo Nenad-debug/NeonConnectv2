@@ -3,13 +3,14 @@ import { supabase } from './supabaseClient'
 export const statsService = {
   async getStats() {
     try {
-      // Get active users count (confirmed users)
+      // Get active users count (ALL users, not just confirmed)
       const { count: activeUsers, error: usersError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
-        .not('confirmed_at', 'is', null)
 
-      if (usersError) console.error('Users error:', usersError)
+      if (usersError) {
+        console.error('Users error:', usersError)
+      }
 
       // Get active jobs count
       const { count: activeJobs, error: jobsError } = await supabase
