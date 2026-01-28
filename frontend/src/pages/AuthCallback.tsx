@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CheckCircle, AlertCircle, Loader } from 'lucide-react'
 import { authService } from '../services/authService'
 
 export default function AuthCallback() {
@@ -49,7 +50,9 @@ export default function AuthCallback() {
               setMessage('Uspešna potvrda! Ulogovan si, preusmeravam...')
               setTimeout(() => navigate('/dashboard'), 1400)
             } else {
-              setMessage('Link je već iskorišćen ili je sesija istekla. Ako nisi ulogovan, prijavi se.')
+              // Email already confirmed previously
+              setMessage('Nalog je već verifikovan! 🎉 Nema potrebe da se ponovo potvrdi. Preusmeravam...')
+              setTimeout(() => navigate('/dashboard'), 2000)
             }
           } else {
             // Normal login flow
@@ -78,9 +81,25 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Potvrda mejla</h2>
-          <p className="text-gray-400">{message}</p>
+        <div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center space-y-4">
+          {/* Icon based on message */}
+          {message.includes('greške') ? (
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          ) : message.includes('Verifikujem') ? (
+            <Loader className="w-12 h-12 text-blue-500 mx-auto animate-spin" />
+          ) : (
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+          )}
+          
+          <h2 className="text-2xl font-bold text-white">Potvrda mejla</h2>
+          <p className="text-gray-300 leading-relaxed">{message}</p>
+          
+          {/* Status indicator */}
+          {message.includes('već verifikovan') && (
+            <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded text-green-300 text-sm">
+              ✓ Nalog je potpuno aktivan i spreman za upotrebu
+            </div>
+          )}
         </div>
       </div>
     </div>
