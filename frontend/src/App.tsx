@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/common/Navbar'
 import Footer from './components/common/Footer'
 import AuthGuard from './components/common/AuthGuard'
+import MaintenanceBanner from './components/common/MaintenanceBanner'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -19,7 +20,8 @@ function App() {
   return (
     <Router>
       <AuthGuard>
-        <div className="flex flex-col min-h-screen gradient-bg">
+        <MaintenanceBanner />
+        <div className="flex flex-col min-h-screen gradient-bg pt-20">
           <Navbar />
           <main className="flex-grow">
             <Routes>
