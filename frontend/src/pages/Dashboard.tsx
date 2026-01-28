@@ -2,12 +2,105 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '../services/authService'
 import Background from '../components/common/Background'
-import { AlertCircle, Zap } from 'lucide-react'
+import ApplicationsList from '../components/candidate/ApplicationsList'
+import SavedJobs from '../components/candidate/SavedJobs'
+import RecommendedJobs from '../components/candidate/RecommendedJobs'
+import ProfileQuickView from '../components/candidate/ProfileQuickView'
+import Notifications from '../components/candidate/Notifications'
+import { TrendingUp, Briefcase, Heart, Sparkles, LogOut } from 'lucide-react'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
   const navigate = useNavigate()
+
+  // Mock data - kasnije iz baze
+  const mockApplications = [
+    {
+      id: '1',
+      job_title: 'Senior Frontend Developer',
+      company_name: 'TechCorp Belgrade',
+      location: 'Remote',
+      status: 'interview' as const,
+      applied_at: new Date().toISOString(),
+      salary_range: '€80k-100k'
+    },
+    {
+      id: '2',
+      job_title: 'React Developer',
+      company_name: 'StartupHub',
+      location: 'Belgrade',
+      status: 'viewed' as const,
+      applied_at: new Date(Date.now() - 86400000).toISOString(),
+      salary_range: '€50k-70k'
+    }
+  ]
+
+  const mockSavedJobs = [
+    {
+      id: '3',
+      job_title: 'Full Stack Developer',
+      company_name: 'InnovateTech',
+      location: 'Niš',
+      salary_range: '€60k-80k',
+      job_type: 'Full-time',
+      saved_at: new Date().toISOString()
+    },
+    {
+      id: '4',
+      job_title: 'Frontend Engineer',
+      company_name: 'CloudSolutions',
+      location: 'Remote',
+      salary_range: '€70k-90k',
+      job_type: 'Full-time',
+      saved_at: new Date().toISOString()
+    }
+  ]
+
+  const mockRecommendedJobs = [
+    {
+      id: '5',
+      job_title: 'Next.js Developer',
+      company_name: 'DigitalAgency',
+      location: 'Belgrade',
+      salary_range: '€75k-95k',
+      description: 'Tražimo iskusnog Next.js developera za naš tim',
+      match_percentage: 95,
+      skills: ['React', 'Next.js', 'TypeScript', 'Node.js'],
+      saved: false
+    },
+    {
+      id: '6',
+      job_title: 'TypeScript Developer',
+      company_name: 'WebStudio',
+      location: 'Remote',
+      salary_range: '€65k-85k',
+      description: 'Razvoj modernih web aplikacija sa TypeScript',
+      match_percentage: 88,
+      skills: ['TypeScript', 'React', 'Testing'],
+      saved: false
+    }
+  ]
+
+  const mockNotifications = [
+    {
+      id: '1',
+      type: 'status_change' as const,
+      title: 'Intervju pozvan!',
+      description: 'TechCorp vas je pozvao na intervju za Senior Frontend Developer',
+      created_at: new Date().toISOString(),
+      read: false
+    },
+    {
+      id: '2',
+      type: 'job_match' as const,
+      title: 'Novi posao za tebe',
+      description: 'Pronašli smo posao koji se poklapa sa tvojim profilom',
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      read: true
+    }
+  ]
 
   useEffect(() => {
     const loadUser = async () => {
@@ -33,69 +126,176 @@ export default function Dashboard() {
     loadUser()
   }, [navigate])
 
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+      navigate('/login')
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="text-slate-300 text-lg">Učitavanje...</div>
+        <div className="text-center space-y-4">
+          <div className="inline-block">
+            <div className="w-12 h-12 rounded-full border-4 border-blue-500/30 border-t-blue-500 animate-spin"></div>
+          </div>
+          <p className="text-slate-300 text-lg">Učitavanje...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-20">
+    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8">
       <Background />
 
-      <div className="relative max-w-4xl mx-auto px-4 space-y-8">
-        {/* Header */}
-        <div className="space-y-4">
-          <h1 className="text-5xl font-black">Dashboard</h1>
-          <p className="text-xl text-slate-300">Dobrodošao/la, <span className="text-blue-400 font-semibold">{user?.email}</span></p>
+      <div className="relative max-w-7xl mx-auto px-4 space-y-8">
+        {/* ===== HEADER SECTION ===== */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black">Dashboard</h1>
+            <p className="text-xl text-slate-300">
+              Dobrodošao/la, <span className="text-blue-400 font-semibold">{user?.user_metadata?.full_name || user?.email}</span>
+            </p>
+          </div>
+          
+          <button
+            onClick={handleLogout}
+            className="group px-4 py-2 rounded-lg border border-slate-700/50 text-slate-300 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-300 flex items-center gap-2"
+          >
+            <LogOut className="w-5 h-5" />
+            Odjava
+          </button>
         </div>
 
-        {/* Main message - Under Development */}
-        <div className="relative group">
-          {/* Gradient border background */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 via-orange-600 to-yellow-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          {/* Content card */}
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 space-y-6">
-            <div className="flex items-start gap-4">
-              <Zap className="w-12 h-12 text-yellow-400 flex-shrink-0" />
-              <div className="space-y-3 flex-1">
-                <h2 className="text-3xl font-bold">Dashboard je u razvojnoj fazi</h2>
-                <p className="text-lg text-slate-300">
-                  Radimo intenzivno na razvoju kompletnog dashboard-a sa svim funkcionalnostima. Uskoro će biti dostupan sa mogućnošću upravljanja tvojim profilom, primljenim ponudama, i svim ostalim naprednim mogućnostima.
-                </p>
-                <p className="text-slate-400 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Zahvaljujemo ti na strpljenju!
-                </p>
+        {/* ===== QUICK STATS ===== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { label: 'Moje aplikacije', value: mockApplications.length, icon: Briefcase, color: 'from-blue-600' },
+            { label: 'Sačuvani poslovi', value: mockSavedJobs.length, icon: Heart, color: 'from-rose-600' },
+            { label: 'Preporuke', value: mockRecommendedJobs.length, icon: Sparkles, color: 'from-emerald-600' }
+          ].map((stat, idx) => {
+            const Icon = stat.icon
+            return (
+              <div key={idx} className="group relative animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
+                <div className={`absolute -inset-0.5 bg-gradient-to-r ${stat.color} to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6 flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} to-purple-700 bg-opacity-20 flex items-center justify-center`}>
+                    <Icon className="w-6 h-6 text-blue-300" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">{stat.label}</p>
+                    <p className="text-3xl font-bold text-white">{stat.value}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* ===== TABS ===== */}
+        <div className="flex gap-4 border-b border-slate-700/50">
+          {[
+            { id: 'overview', label: '📊 Pregled' },
+            { id: 'applications', label: '📤 Moje aplikacije' },
+            { id: 'saved', label: '❤️ Sačuvani poslovi' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-3 font-semibold border-b-2 transition-all duration-300 ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ===== CONTENT SECTIONS ===== */}
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            {/* 2 Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Recommended Jobs */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-emerald-400" />
+                      Preporučeni poslovi
+                    </h2>
+                    <button className="text-sm text-blue-400 hover:text-blue-300 font-semibold">
+                      Prikaži sve →
+                    </button>
+                  </div>
+                  <RecommendedJobs jobs={mockRecommendedJobs.slice(0, 2)} />
+                </div>
+
+                {/* Recent Applications */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <TrendingUp className="w-6 h-6 text-blue-400" />
+                      Poslednje aplikacije
+                    </h2>
+                    <button className="text-sm text-blue-400 hover:text-blue-300 font-semibold">
+                      Prikaži sve →
+                    </button>
+                  </div>
+                  <ApplicationsList applications={mockApplications.slice(0, 2)} />
+                </div>
+              </div>
+
+              {/* Right Column - Sidebar */}
+              <div className="space-y-6">
+                {/* Profile Quick View */}
+                <ProfileQuickView user={user} completeness={65} />
+
+                {/* Notifications */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold">Notifikacije</h3>
+                  <Notifications notifications={mockNotifications} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Features coming soon */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {[
-            { title: 'Upravljanje profilom', desc: 'Ažuriraj svoje lične podatke i veštine' },
-            { title: 'Moje aplikacije', desc: 'Prati sve poslove na koje si se prijavio' },
-            { title: 'Sačuvani poslovi', desc: 'Čuva poslove koji te interesuju' },
-            { title: 'Preporuke', desc: 'Personalizovane preporuke poslova' },
-          ].map((feature, idx) => (
-            <div key={idx} className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <h3 className="font-bold text-white">{feature.title}</h3>
-                </div>
-                <p className="text-sm text-slate-400">{feature.desc}</p>
-                <p className="text-xs text-yellow-400/70">Dolazi uskoro...</p>
-              </div>
-            </div>
-          ))}
+        {/* Applications Tab */}
+        {activeTab === 'applications' && (
+          <div className="space-y-4">
+            <ApplicationsList applications={mockApplications} />
+          </div>
+        )}
+
+        {/* Saved Jobs Tab */}
+        {activeTab === 'saved' && (
+          <div className="space-y-4">
+            <SavedJobs jobs={mockSavedJobs} />
+          </div>
+        )}
+
+        {/* CTA Section */}
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center space-y-4">
+            <h3 className="text-2xl font-bold text-white">Pronađi svoj idealni posao</h3>
+            <p className="text-slate-300 max-w-2xl mx-auto">
+              Pretraži sve dostupne poslove i primeni se za one koji te interesuju
+            </p>
+            <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300">
+              Pretraži poslove
+            </button>
+          </div>
         </div>
       </div>
     </div>
