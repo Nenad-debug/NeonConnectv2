@@ -20,6 +20,7 @@ export const aiService = {
       console.log('🤖 [AI SERVICE] Sending message to Gemini API')
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      console.log('🔑 Debug - API Key present:', !!apiKey, 'Value:', apiKey?.substring(0, 10) + '...')
       if (!apiKey) {
         throw new Error('Gemini API ključ nije postavljen. Proveri .env datoteku.')
       }
