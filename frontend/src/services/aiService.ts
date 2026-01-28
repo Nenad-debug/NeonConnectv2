@@ -19,54 +19,69 @@ export const aiService = {
     try {
       console.log('🤖 [AI SERVICE] Sending message to Gemini API')
 
-      // Call Netlify serverless function
-      const functionUrl = '/.netlify/functions/ai-chat'
-      console.log('📍 [AI SERVICE] Calling function at:', functionUrl)
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      if (!apiKey) {
+        throw new Error('Gemini API ključ nije postavljen. Proveri .env datoteku.')
+      }
       
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          context,
-          previousMessages: previousMessages || [],
-        }),
+      // Build conversation history
+      const conversationHistory = previousMessages
+        ?.filter((m: any) => m.role && m.content)
+        .map((m: any) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }],
+        })) || []
+
+      // Add current message
+      conversationHistory.push({
+        role: 'user',
+        parts: [{ text: userMessage }],
       })
 
-      if (!response.ok) {
-        console.error('❌ [AI SERVICE] Response not OK, status:', response.status)
-        let errorData: any = {}
-        try {
-          errorData = await response.json()
-        } catch (e) {
-          const text = await response.text()
-          console.error('❌ [AI SERVICE] Response text:', text)
-          return `AI greška (status ${response.status}): ${text || 'Unknown error'}`
-        }
-        console.error('❌ [AI SERVICE] Function error:', errorData)
-        
-        if (response.status === 404) {
-          return `Hmm, AI asistent nije dostupan (serverless funkcija nije deployovana).`
-        }
-        
-        throw new Error(`AI Service error: ${errorData.error || errorData.message || 'Unknown error'}`)
+      // System prompt
+      const systemPrompts: Record<string, string> = {
+        profile_setup: 'Помози кориснику да попуни свој профил. Дај краће и јасније одговоре. Буди пријатан и подстицајан.',
+        general: 'Си NeonConnect AI асистент. Помаж корисницима са питањима везаним за посао, каријеру и развој. Буди користан, пријатан и брз у одговорима.',
       }
+      const systemPrompt = systemPrompts[context] || systemPrompts.general
+
+      // Call Gemini API directly
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: conversationHistory,
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              maxOutputTokens: 1024,
+            },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            ],
+          }),
+        }
+      )
 
       const data = await response.json()
-      console.log('✅ [AI SERVICE] Response received')
-      return data.response
+
+      if (!response.ok) {
+        console.error('❌ Gemini API error:', data)
+        return `Gemini greška: ${data.error?.message || 'Unknown error'}`
+      }
+
+      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nema odgovora'
+      console.log('✅ Gemini response received')
+      return responseText
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Error:', err)
-      
-      // Fallback for missing function
-      if (err.message?.includes('404') || err.message?.includes('fetch')) {
-        return `AI asistent nije dostupan. Pokušajte sa osvežavanjem stranice.`
-      }
-      
-
-      throw new Error(err.message || 'Greška pri komunikaciji sa AI asistentom')
+      return `Greška: ${err.message}`
     }
   },
 
