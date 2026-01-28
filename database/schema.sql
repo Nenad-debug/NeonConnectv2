@@ -8,8 +8,15 @@ CREATE TABLE public.users (
   email TEXT NOT NULL UNIQUE,
   role TEXT NOT NULL CHECK (role IN ('candidate', 'employer')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  confirmed_at TIMESTAMP DEFAULT NULL
 );
+
+-- Allow users to update their own row (used to record confirmation time)
+DROP POLICY IF EXISTS "Users can update own data" ON public.users;
+CREATE POLICY "Users can update own data" ON public.users
+  FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
 
 -- Candidate profiles
 CREATE TABLE public.candidate_profiles (

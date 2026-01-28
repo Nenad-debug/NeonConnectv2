@@ -55,10 +55,39 @@ export const authService = {
   },
 
   async getCurrentUser() {
+    // First, try regular getUser
     const { data: { user }, error } = await supabase.auth.getUser()
-    if (error) throw error
-    return user
+    if (error) {
+      // If there's an error, don't throw here - return null and allow fallback
+    }
+    if (user) return user
+
+    // If no user, attempt to restore session from URL (some Supabase flows return tokens in the hash)
+    await this.restoreSessionFromUrl().catch(() => {})
+
+    const { data: { user: userAfter } } = await supabase.auth.getUser()
+    return userAfter || null
   },
+
+  // Try to extract tokens from URL hash/search and set session in the client
+  async restoreSessionFromUrl() {
+    try {
+      const hash = typeof window !== 'undefined' ? window.location.hash : ''
+      const search = typeof window !== 'undefined' ? window.location.search : ''
+      const params = new URLSearchParams((hash && hash.startsWith('#') ? hash.slice(1) : '') || search)
+      const access_token = params.get('access_token')
+      const refresh_token = params.get('refresh_token')
+      if (access_token) {
+        // setSession will populate the client with the authenticated session so getUser works
+        await supabase.auth.setSession({ access_token, refresh_token })
+        return true
+      }
+    } catch (e) {
+      // ignore
+    }
+    return false
+  },
+
 
   async createProfileIfMissing(user: any) {
     // Check if profile already exists
@@ -90,6 +119,29 @@ export const authService = {
 
       await supabase.from('users').insert([{ id: user.id, email: user.email, role }])
     }
+  },
+
+  // Record confirmation timestamp if not already set. Returns true when it was set now, false if it existed already.
+  async markEmailConfirmedIfMissing(user: any) {
+    // Ensure the profile exists first
+    await this.createProfileIfMissing(user).catch(() => {})
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('confirmed_at')
+      .eq('id', user.id)
+      .single()
+
+    if (error && error.code !== 'PGRST116') {
+      // Ignore transient errors and return false so we don't block UX
+    }
+
+    const already = data && data.confirmed_at
+    if (!already) {
+      await supabase.from('users').update({ confirmed_at: new Date().toISOString() }).eq('id', user.id)
+      return true
+    }
+    return false
   },
 }
 
