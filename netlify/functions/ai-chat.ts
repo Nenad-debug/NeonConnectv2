@@ -1,23 +1,25 @@
 // Netlify Serverless Function for Google Gemini API
 // Deploy automatically with: netlify deploy
 
-module.exports = async (event: any) => {
+module.exports = async (req: any, res: any) => {
+  console.log('📨 Function invoked')
+  console.log('Method:', req.method)
+  console.log('Headers:', req.headers)
+  
   // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      },
-      body: '',
-    }
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    return res.status(200).end()
   }
 
   try {
-    // Parse body - could be string or object
-    const body = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : event.body
+    // Parse body
+    let body = req.body
+    if (typeof body === 'string') {
+      body = JSON.parse(body)
+    }
     const { message, context, previousMessages } = body
 
     console.log('📨 Function called with:', { message, context })
@@ -25,11 +27,7 @@ module.exports = async (event: any) => {
     // Validate input
     if (!message || typeof message !== 'string') {
       console.error('❌ Invalid message:', message)
-      return {
-        statusCode: 400,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Invalid message' }),
-      }
+      return res.status(400).json({ error: 'Invalid message' })
     }
 
     // Get Gemini API key from environment
@@ -37,11 +35,7 @@ module.exports = async (event: any) => {
     if (!apiKey) {
       console.error('❌ GOOGLE_GEMINI_API_KEY is not set in environment variables')
       console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE')))
-      return {
-        statusCode: 500,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'API key not configured' }),
-      }
+      return res.status(500).json({ error: 'API key not configured' })
     }
     console.log('✅ API key loaded, starting Gemini API call...')
 
@@ -113,14 +107,10 @@ module.exports = async (event: any) => {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('Gemini API error:', data)
-      return {
-        statusCode: response.status,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          error: data.error?.message || 'Gemini API error',
-        }),
-      }
+      console.error('❌ Gemini API error:', data)
+      return res.status(response.status).json({
+        error: data.error?.message || 'Gemini API error',
+      })
     }
 
     // Extract response text
@@ -128,20 +118,13 @@ module.exports = async (event: any) => {
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
       'Извините, нема одговора од AI-а.'
 
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ response: responseText }),
-    }
+    console.log('✅ Gemini response received')
+    return res.status(200).json({ response: responseText })
   } catch (error: any) {
     console.error('❌ AI Function error:', error)
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        error: error.message || 'Internal server error',
-        details: error.toString(),
-      }),
-    }
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
+      details: error.toString(),
+    })
   }
 }
