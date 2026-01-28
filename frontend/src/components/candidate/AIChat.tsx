@@ -40,8 +40,10 @@ export default function AIChat({
     try {
       const history = await aiService.getChatHistory(userId, context, 20)
       setMessages(history)
-    } catch (err) {
-      console.error('Failed to load history:', err)
+    } catch (err: any) {
+      console.warn('Failed to load chat history (table may not exist yet):', err.message)
+      // Don't set error - just start with empty history
+      setMessages([])
     }
   }
 

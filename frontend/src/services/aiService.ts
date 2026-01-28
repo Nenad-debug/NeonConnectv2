@@ -29,6 +29,11 @@ export const aiService = {
       })
 
       if (error) {
+        // Check if function exists
+        if (error.message?.includes('ai-chat') || error.message?.includes('404')) {
+          console.warn('⚠️ [AI SERVICE] Edge Function not deployed yet - returning placeholder response')
+          return `Hmm, AI asistent nije dostupan (Edge Function nije deployovan). Trebate da pokrenete: supabase functions deploy ai-chat`
+        }
         console.error('❌ [AI SERVICE] Function error:', error)
         throw new Error(`AI Service error: ${error.message}`)
       }
@@ -37,6 +42,12 @@ export const aiService = {
       return data.response
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Error:', err)
+      
+      // Fallback for missing Edge Function
+      if (err.message?.includes('ai-chat')) {
+        return `AI asistent nije dostupan. Prvo trebate da deployujete Edge Function.`
+      }
+      
       throw new Error(err.message || 'Greška pri komunikaciji sa AI asistentom')
     }
   },
@@ -66,7 +77,14 @@ export const aiService = {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // If table doesn't exist, silently fail but continue
+        if (error.message?.includes('chat_messages') || error.message?.includes('not exist')) {
+          console.warn('⚠️ [AI SERVICE] Chat messages table not set up yet - continuing without persistence')
+          return { role, content, context }
+        }
+        throw error
+      }
 
       console.log('✅ [AI SERVICE] Message saved')
       return data
