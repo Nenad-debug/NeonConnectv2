@@ -16,11 +16,15 @@ module.exports = async (event: any) => {
   }
 
   try {
-    const body = JSON.parse(event.body || '{}')
+    // Parse body - could be string or object
+    const body = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : event.body
     const { message, context, previousMessages } = body
+
+    console.log('📨 Function called with:', { message, context })
 
     // Validate input
     if (!message || typeof message !== 'string') {
+      console.error('❌ Invalid message:', message)
       return {
         statusCode: 400,
         headers: { 'Access-Control-Allow-Origin': '*' },
@@ -31,13 +35,15 @@ module.exports = async (event: any) => {
     // Get Gemini API key from environment
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY
     if (!apiKey) {
-      console.error('Missing GOOGLE_GEMINI_API_KEY environment variable')
+      console.error('❌ GOOGLE_GEMINI_API_KEY is not set in environment variables')
+      console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE')))
       return {
         statusCode: 500,
         headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ error: 'API key not configured' }),
       }
     }
+    console.log('✅ API key loaded, starting Gemini API call...')
 
     // Build conversation history
     const conversationHistory = previousMessages
@@ -124,16 +130,17 @@ module.exports = async (event: any) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
       body: JSON.stringify({ response: responseText }),
     }
   } catch (error: any) {
-    console.error('AI Function error:', error)
+    console.error('❌ AI Function error:', error)
     return {
       statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         error: error.message || 'Internal server error',
+        details: error.toString(),
       }),
     }
   }
