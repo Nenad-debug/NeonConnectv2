@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/common/Navbar'
 import Footer from './components/common/Footer'
 import AuthGuard from './components/common/AuthGuard'
-import TestingGuide from './components/common/TestingGuide'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -20,7 +19,6 @@ function App() {
   return (
     <Router>
       <AuthGuard>
-        <TestingGuide />
         <div className="flex flex-col min-h-screen gradient-bg">
           <Navbar />
           <main className="flex-grow">
