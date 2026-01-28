@@ -6,6 +6,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import PostJob from './pages/PostJob'
+import CheckEmail from './pages/CheckEmail'
+import AuthCallback from './pages/AuthCallback'
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/post-job" element={<PostJob />} />
+            <Route path="/check-email" element={<CheckEmail />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
         </main>
         <Footer />

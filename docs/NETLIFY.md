@@ -13,8 +13,7 @@ Ovo su koraci i podešavanja za deploy tvoje Vite + React aplikacije na Netlify.
 4. U **Site settings → Environment** dodaj env varove:
    - `VITE_SUPABASE_URL` = tvoj Supabase URL (npr. `https://xyz.supabase.co`)
    - `VITE_SUPABASE_ANON_KEY` = tvoj public anon key
-
-## Supabase (važno za email confirm i redirect)
+- `VITE_SITE_URL` = tvoj javni sajt (npr. `https://tvoj-sajt.netlify.app`)  # koristi se za redirect u email potvrdi
 - U Supabase → Authentication → Settings:
   - **Site URL** postavi na Netlify URL (npr. `https://tvoj-sajt.netlify.app`)
   - **Redirect URLs**: dodaj `http://localhost:3000` (dev) i `https://tvoj-sajt.netlify.app` (prod)

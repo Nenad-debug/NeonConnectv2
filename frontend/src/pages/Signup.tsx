@@ -30,7 +30,8 @@ export default function Signup() {
 
     try {
       await authService.signup(email, password, role)
-      navigate('/login')
+      // Show friendly page that asks user to check their email
+      navigate(`/check-email?email=${encodeURIComponent(email)}`)
     } catch (err: any) {
       setError(err.message || 'Greška pri registraciji')
     } finally {

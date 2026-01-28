@@ -6,7 +6,10 @@ export const authService = {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role } },
+      options: {
+        data: { role },
+        redirectTo: `${import.meta.env.VITE_SITE_URL}/auth/callback`,
+      },
     })
 
     if (error) throw error
