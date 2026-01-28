@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Briefcase, Users, Zap, Shield, ArrowRight, Mail, X } from 'lucide-react'
+import { Briefcase, Users, Zap, Shield, ArrowRight, Mail, X, HelpCircle } from 'lucide-react'
 import Background from '../components/common/Background'
 import StatsSection from '../components/common/StatsSection'
 import SocialProof from '../components/common/SocialProof'
 
 export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false)
+  const [showTestingGuide, setShowTestingGuide] = useState(false)
   const [contactForm, setContactForm] = useState({ email: '', subject: '', message: '' })
   const [contactLoading, setContactLoading] = useState(false)
 
@@ -66,6 +67,13 @@ export default function Home() {
               >
                 Objavi posao
               </Link>
+              <button
+                onClick={() => setShowTestingGuide(true)}
+                className="px-8 py-4 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-lg font-bold text-emerald-300 hover:bg-emerald-500/10 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <HelpCircle className="w-5 h-5" />
+                Vodič
+              </button>
             </div>
 
             {/* Social proof */}
@@ -329,6 +337,84 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Testing Guide Modal */}
+      {showTestingGuide && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 w-full max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-3xl font-bold flex items-center gap-2">
+                <HelpCircle className="w-8 h-8 text-emerald-400" />
+                Vodič za Testiranje
+              </h3>
+              <button 
+                onClick={() => setShowTestingGuide(false)}
+                className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4 text-slate-300">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                <p className="text-sm font-semibold text-emerald-300 mb-2">👋 Dobrodošla, Draga!</p>
+                <p className="text-sm">Ovo je detaljni vodič za testiranje NeonConnect sajta. Sledi 10 koraka i proveravaj sve funkcionalnosti.</p>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-bold text-white text-lg">📋 10 Koraka za Testiranje:</h4>
+                <ol className="space-y-2 text-sm">
+                  <li><span className="font-semibold text-blue-300">1.</span> Otvorite sajtи proverite glavni ekran</li>
+                  <li><span className="font-semibold text-blue-300">2.</span> Registrujte se kao KANDIDAT sa email: draga.test1@gmail.com</li>
+                  <li><span className="font-semibold text-blue-300">3.</span> Proverite email potvrdu</li>
+                  <li><span className="font-semibold text-blue-300">4.</span> Prijavite se sa tom email adresom</li>
+                  <li><span className="font-semibold text-blue-300">5.</span> Odjavite se i vratite se (trebalo bi Account Switcher)</li>
+                  <li><span className="font-semibold text-blue-300">6.</span> Registrujte se kao POSLODAVAC sa: draga.test2@gmail.com</li>
+                  <li><span className="font-semibold text-blue-300">7.</span> Objavite novi posao</li>
+                  <li><span className="font-semibold text-blue-300">8.</span> Proverite da li se posao vidi na Jobs stranici</li>
+                  <li><span className="font-semibold text-blue-300">9.</span> Proverite statistiku (trebalo bi 2 korisnika, 1 posao)</li>
+                  <li><span className="font-semibold text-blue-300">10.</span> Testirajте na mobilnom telefonu</li>
+                </ol>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-sm">
+                <p className="font-semibold text-blue-300 mb-2">🔑 Test Email Adrese:</p>
+                <p className="font-mono text-xs bg-slate-800/50 p-2 rounded mb-2">draga.test1@gmail.com</p>
+                <p className="font-mono text-xs bg-slate-800/50 p-2 rounded">draga.test2@gmail.com</p>
+                <p className="text-xs mt-2">Lozinka: <span className="font-mono">TestPassword123!</span></p>
+              </div>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm">
+                <p className="font-semibold text-yellow-300 mb-2">⚠️ Važne Napomene:</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• Brojevi na početnoj stranici mogu biti 0 (NORMALNO je)</li>
+                  <li>• Email potvrde stižu u Spam folder - PROVERITE!</li>
+                  <li>• Account Switcher se pojavljuje nakon logout-a</li>
+                  <li>• Ako nešto ne radi, osvežite stranicu (F5) i obavezno obrišite cookies</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-700">
+              <button
+                onClick={() => setShowTestingGuide(false)}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg font-bold text-white hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300"
+              >
+                Razumem - Kreni sa Testiranjem
+              </button>
+              <button
+                onClick={() => setShowTestingGuide(false)}
+                className="flex-1 px-6 py-3 border-2 border-slate-600 rounded-lg font-semibold text-slate-300 hover:bg-slate-800/50 transition-all duration-300"
+              >
+                Zatvori
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
