@@ -3,10 +3,11 @@ import { supabase } from './supabaseClient'
 export const authService = {
   async signup(email: string, password: string, role: 'candidate' | 'employer') {
     // Try to include role in user_metadata so we can create the profile later when user signs in
-    const { data, error } = await supabase.auth.signUp(
-      { email, password },
-      { data: { role } }
-    )
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { role } },
+    })
 
     if (error) throw error
 
