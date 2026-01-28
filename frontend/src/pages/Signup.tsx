@@ -20,7 +20,9 @@ export default function Signup() {
     if (roleParam && (roleParam === 'candidate' || roleParam === 'employer')) {
       setRole(roleParam)
     }
-  }, [searchParams])  const handleSignup = async (e: React.FormEvent) => {
+  }, [searchParams])
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
