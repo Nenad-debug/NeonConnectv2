@@ -1,15 +1,14 @@
+// @ts-nocheck
 // Supabase Edge Function for Google Gemini API
 // Deploy with: supabase functions deploy ai-chat
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-// @ts-expect-error - Deno types not available in TypeScript
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// @ts-expect-error - Deno types not available
 serve(async (req: Request) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -28,7 +27,6 @@ serve(async (req: Request) => {
     }
 
     // Get Gemini API key from environment
-    // @ts-expect-error - Deno types not available
     const apiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY')
     if (!apiKey) {
       console.error('Missing GOOGLE_GEMINI_API_KEY')
