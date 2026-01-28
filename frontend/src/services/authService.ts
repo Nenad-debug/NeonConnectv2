@@ -79,7 +79,8 @@ export const authService = {
       const refresh_token = params.get('refresh_token')
       if (access_token) {
         // Build a typed payload so we don't pass null to setSession (avoids TypeScript errors)
-        const payload: { access_token: string; refresh_token?: string } = { access_token }
+        // access_token is checked above; assert non-null for typing comfort
+        const payload: { access_token: string; refresh_token?: string } = { access_token: access_token! }
         if (refresh_token) payload.refresh_token = refresh_token
         // setSession will populate the client with the authenticated session so getUser works
         await supabase.auth.setSession(payload)
