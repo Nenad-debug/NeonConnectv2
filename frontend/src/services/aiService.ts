@@ -13,73 +13,32 @@ export const aiService = {
    */
   async sendMessage(
     userMessage: string,
-    context: string = 'general',
+    _context: string = 'general',
     previousMessages?: ChatMessage[]
   ): Promise<string> {
     try {
-      console.log('🤖 [AI SERVICE] Sending message to Gemini API')
+      console.log('🤖 [AI SERVICE] Sending message via Netlify Function')
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-      console.log('🔑 Debug - API Key present:', !!apiKey, 'Value:', apiKey?.substring(0, 10) + '...')
-      if (!apiKey) {
-        throw new Error('Gemini API ključ nije postavljen. Proveri .env datoteku.')
-      }
-      
-      // Build conversation history
-      const conversationHistory = previousMessages
-        ?.filter((m: any) => m.role && m.content)
-        .map((m: any) => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }],
-        })) || []
-
-      // Add current message
-      conversationHistory.push({
-        role: 'user',
-        parts: [{ text: userMessage }],
+      // Call our Netlify serverless function instead of Gemini API directly
+      const response = await fetch('/.netlify/functions/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          context: _context,
+          previousMessages: previousMessages || [],
+        }),
       })
-
-      // System prompt
-      const systemPrompts: Record<string, string> = {
-        profile_setup: 'Помози кориснику да попуни свој профил. Дај краће и јасније одговоре. Буди пријатан и подстицајан.',
-        general: 'Си NeonConnect AI асистент. Помаж корисницима са питањима везаним за посао, каријеру и развој. Буди користан, пријатан и брз у одговорима.',
-      }
-      const systemPrompt = systemPrompts[context] || systemPrompts.general
-
-      // Call Gemini API directly
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: conversationHistory,
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              maxOutputTokens: 1024,
-            },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            ],
-          }),
-        }
-      )
 
       const data = await response.json()
 
       if (!response.ok) {
-        console.error('❌ Gemini API error:', data)
-        return `Gemini greška: ${data.error?.message || 'Unknown error'}`
+        console.error('❌ Function error:', data)
+        return `Greška: ${data.error || 'Unknown error'}`
       }
 
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nema odgovora'
-      console.log('✅ Gemini response received')
-      return responseText
+      console.log('✅ Response received')
+      return data.response || 'Nema odgovora'
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Error:', err)
       return `Greška: ${err.message}`

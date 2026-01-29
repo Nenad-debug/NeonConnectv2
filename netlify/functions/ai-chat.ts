@@ -37,24 +37,24 @@ exports.handler = async (event: any) => {
       }
     }
 
-    // Get Gemini API key
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    // Get Groq API key
+    const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
-      console.error('❌ GOOGLE_GEMINI_API_KEY not set')
+      console.error('❌ GROQ_API_KEY not set')
       return {
         statusCode: 500,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
         body: JSON.stringify({ error: 'API key not configured' }),
       }
     }
-    console.log('✅ API key found')
+    console.log('✅ Groq API key found')
 
-    // Build conversation history
+    // Build conversation history for Groq
     const conversationHistory = previousMessages
       ?.filter((m: any) => m.role && m.content)
       .map((m: any) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content,
       })) || []
 
     // Add current message
@@ -74,42 +74,24 @@ exports.handler = async (event: any) => {
 
     const systemPrompt = systemPrompts[context] || systemPrompts.default
 
-    // Call Google Gemini API
+    // Call Groq API (OpenAI-compatible)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://api.groq.com/openai/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          contents: conversationHistory,
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
-          },
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_HATE_SPEECH',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
+          model: 'mixtral-8x7b-32768',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...conversationHistory,
+            { role: 'user', content: message },
           ],
+          temperature: 0.7,
+          max_tokens: 1024,
         }),
       }
     )
@@ -117,20 +99,20 @@ exports.handler = async (event: any) => {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('❌ Gemini API error:', data)
+      console.error('❌ Groq API error:', data)
       return {
         statusCode: response.status,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: data.error?.message || 'Gemini API error' }),
+        body: JSON.stringify({ error: data.error?.message || 'Groq API error' }),
       }
     }
 
-    // Extract response text
+    // Extract response text from Groq
     const responseText =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.choices?.[0]?.message?.content ||
       'Извините, нема одговора од AI-а.'
 
-    console.log('✅ Gemini response received')
+    console.log('✅ Groq response received')
     return {
       statusCode: 200,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
