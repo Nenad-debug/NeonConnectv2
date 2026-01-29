@@ -154,30 +154,49 @@ export default function Dashboard() {
     if (!user) return
 
     try {
-      console.log('💾 [DASHBOARD] Saving profile setup...')
+      console.log('💾 [DASHBOARD] Saving profile setup...', profileData)
       
-      await profileService.saveCandidateProfile(user.id, profileData)
+      // Convert snake_case from ProfileSetup to camelCase for profileService
+      const convertedData = {
+        firstName: profileData.first_name || '',
+        lastName: profileData.last_name || '',
+        bio: profileData.bio || '',
+        phone: profileData.phone || '',
+        location: profileData.location || '',
+        experienceYears: parseInt(profileData.years_experience) || 0,
+        skills: Array.isArray(profileData.skills) ? profileData.skills : [],
+        education: profileData.education || '',
+        certifications: [],
+        languages: [],
+      }
+      
+      console.log('📝 [DASHBOARD] Converted data:', convertedData)
+      
+      await profileService.saveCandidateProfile(user.id, convertedData)
       
       // Show success animation first, then start tour
+      console.log('🎬 [DASHBOARD] Setting showProfileSetup to false')
       setShowProfileSetup(false)
+      console.log('🎬 [DASHBOARD] Setting showSuccessAnimation to true')
       setShowSuccessAnimation(true)
       
       console.log('✅ [DASHBOARD] Profile setup completed')
     } catch (err: any) {
       console.error('❌ [DASHBOARD] Profile setup error:', err)
-      throw new Error(err.message || 'Greška pri čuvanju profila')
+      // Don't throw - let the user see the error message
     }
   }
 
   const handleSuccessAnimationComplete = () => {
+    console.log('🎉 [DASHBOARD] Success animation completed, starting tour...')
     setShowSuccessAnimation(false)
     // Start the AI guided tour after success animation
     setShowAITour(true)
   }
 
   const handleAITourComplete = () => {
-    setShowAITour(false)
     console.log('✅ [DASHBOARD] AI tour completed')
+    setShowAITour(false)
   }
 
   if (loading) {

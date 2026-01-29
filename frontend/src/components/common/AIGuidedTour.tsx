@@ -144,19 +144,28 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   const tourSteps = getTourSteps(userName)
 
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) {
+      console.log('🚫 [AI TOUR] Tour is not active')
+      return
+    }
+
+    console.log('🎯 [AI TOUR] Tour activated, current step:', currentStep)
 
     const step = tourSteps[currentStep]
 
     if (step.target) {
       const element = document.querySelector(step.target) as HTMLElement
       if (element) {
+        console.log('✅ [AI TOUR] Found target element:', step.target)
         updateHighlightPosition(element)
 
         window.addEventListener('resize', () => updateHighlightPosition(element))
         return () => window.removeEventListener('resize', () => updateHighlightPosition(element))
+      } else {
+        console.log('⚠️ [AI TOUR] Target element not found:', step.target)
       }
     } else {
+      console.log('ℹ️ [AI TOUR] No target for this step')
       setHighlightPosition(null)
     }
   }, [isActive, currentStep])
@@ -173,18 +182,22 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
+      console.log('⬜️ [AI TOUR] Moving to next step:', currentStep + 1)
       setCurrentStep(currentStep + 1)
     } else {
+      console.log('✅ [AI TOUR] Tour completed, calling onComplete')
       onComplete()
     }
   }
 
   const handleSkip = () => {
+    console.log('⏭️ [AI TOUR] Tour skipped')
     onComplete()
   }
 
   const handlePrevious = () => {
     if (currentStep > 0) {
+      console.log('⬅️ [AI TOUR] Moving to previous step:', currentStep - 1)
       setCurrentStep(currentStep - 1)
     }
   }

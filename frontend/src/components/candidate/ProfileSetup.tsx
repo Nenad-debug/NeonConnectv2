@@ -304,6 +304,7 @@ VAŽNO:
   const saveProfile = async (data: Record<string, any>) => {
     try {
       setIsCompleting(true)
+      console.log('💾 [PROFILE SETUP] Starting to save profile...', data)
 
       // Parse skills if needed
       let skills = data.skills || []
@@ -324,6 +325,7 @@ VAŽNO:
       const lastName = nameParts.slice(1).join(' ') || ''
 
       // Update profile
+      console.log('📝 [PROFILE SETUP] Updating Supabase profile...')
       const { error } = await supabase
         .from('candidate_profiles')
         .update({
@@ -336,6 +338,8 @@ VAŽNO:
         .eq('user_id', user.id)
 
       if (error) throw error
+
+      console.log('✅ [PROFILE SETUP] Profile saved to Supabase')
 
       setMessages((prev) => [
         ...prev,
@@ -358,21 +362,35 @@ Sada mozes da trazis poslove! 🚀`,
       ])
 
       // Pozovi onComplete nakon 2s da se pokrene success animation
-      setTimeout(() => {
-        onComplete({
-          first_name: firstName,
-          last_name: lastName,
-          bio: data.bio,
-          skills: skills,
-          current_position: data.current_position,
-          years_experience: data.years_experience,
-          education: data.education,
-          location: data.location,
-          expected_salary: data.expected_salary,
-        })
+      console.log('⏱️ [PROFILE SETUP] Scheduling onComplete callback in 2s...')
+      setTimeout(async () => {
+        console.log('🎯 [PROFILE SETUP] Calling onComplete callback...')
+        try {
+          await onComplete({
+            first_name: firstName,
+            last_name: lastName,
+            bio: data.bio,
+            skills: skills,
+            current_position: data.current_position,
+            years_experience: data.years_experience,
+            education: data.education,
+            location: data.location,
+            expected_salary: data.expected_salary,
+          })
+          console.log('✅ [PROFILE SETUP] onComplete callback completed successfully')
+        } catch (err: any) {
+          console.error('❌ [PROFILE SETUP] onComplete callback failed:', err)
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: `Greska pri finalizaciji profila: ${err.message}`,
+            },
+          ])
+        }
       }, 2000)
     } catch (err: any) {
-      console.error('Save error:', err)
+      console.error('❌ [PROFILE SETUP] Save error:', err)
       setMessages((prev) => [
         ...prev,
         {
