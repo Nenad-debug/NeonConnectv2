@@ -208,7 +208,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   const isLastStep = currentStep === tourSteps.length - 1
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[110]">
       <style>{`
         @keyframes pulse-highlight {
           0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4), 0 0 0 8px rgba(59, 130, 246, 0.2); }
@@ -284,7 +284,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
       {/* Tour card */}
       <div
         ref={tourRef}
-        className="tour-card fixed z-50 w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 shadow-2xl p-8"
+        className="tour-card fixed z-[110] w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 shadow-2xl p-8"
         style={{
           left: '50%',
           transform: 'translateX(-50%)',
@@ -365,7 +365,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
       {/* Floating AI indicator */}
       {currentStep === 0 && (
-        <div className="fixed top-8 left-8 z-50 flex items-center gap-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm">
+        <div className="fixed top-8 left-8 z-[110] flex items-center gap-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm">
           <div className="tour-pointer"></div>
           <div>
             <p className="text-sm font-semibold text-blue-300">Tour vođen od AI asistenta</p>

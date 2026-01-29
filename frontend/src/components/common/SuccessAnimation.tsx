@@ -46,7 +46,7 @@ export default function SuccessAnimation({ isVisible, onComplete, userName }: Su
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
       {/* Background blur */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
