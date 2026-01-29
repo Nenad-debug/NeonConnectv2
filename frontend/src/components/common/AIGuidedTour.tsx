@@ -324,6 +324,16 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
           border-radius: 50%;
           animation: pulse 2s ease-in-out infinite;
         }
+
+        @keyframes tour-arrow-bounce {
+          0%, 100% { transform: translateY(0); opacity: 1; }
+          50% { transform: translateY(6px); opacity: 0.9; }
+        }
+        .tour-arrow {
+          animation: tour-arrow-bounce 1.2s ease-in-out infinite;
+          pointer-events: none;
+          margin-left: -18px;
+        }
       `}</style>
 
       {/* Overlay: full screen when no highlight; 4 strips (frame) when highlight so that area stays UNBLURRED */}
@@ -340,15 +350,37 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
       {/* Highlight border around unblurred area */}
       {highlightPosition && (
-        <div
-          className="tour-highlight"
-          style={{
-            top: highlightPosition.top,
-            left: highlightPosition.left,
-            width: highlightPosition.width,
-            height: highlightPosition.height,
-          }}
-        />
+        <>
+          <div
+            className="tour-highlight"
+            style={{
+              top: highlightPosition.top,
+              left: highlightPosition.left,
+              width: highlightPosition.width,
+              height: highlightPosition.height,
+            }}
+          />
+          {/* Animated arrow pointing at the highlighted element (above or below depending on space) */}
+          <div
+            className="tour-arrow fixed z-[106]"
+            style={{
+              left: highlightPosition.left + highlightPosition.width / 2,
+              top: highlightPosition.top >= 50 ? highlightPosition.top - 28 : highlightPosition.top + highlightPosition.height + 4,
+              transform: highlightPosition.top >= 50 ? undefined : 'rotate(180deg)',
+            }}
+            aria-hidden="true"
+          >
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
+              <path d="M12 4v16M12 4l-6 6M12 4l6 6" stroke="url(#tourArrowGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <defs>
+                <linearGradient id="tourArrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </>
       )}
 
       {/* Tour card - positioned so it doesn't cover highlight; smooth transition when step changes */}
