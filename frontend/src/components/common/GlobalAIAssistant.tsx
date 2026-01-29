@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { MessageCircle, X } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../../services/supabaseClient'
 import AIChat from '../candidate/AIChat'
 
 export default function GlobalAIAssistant() {
   const [isOpen, setIsOpen] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [context, setContext] = useState('general')
+  const location = useLocation()
 
   useEffect(() => {
     // Get current user
@@ -17,6 +20,24 @@ export default function GlobalAIAssistant() {
     }
     getUser()
   }, [])
+
+  // Detect context based on current page/route
+  useEffect(() => {
+    const pathname = location.pathname
+    
+    if (pathname.includes('/profile') || pathname.includes('/setup')) {
+      setContext('profile_setup')
+    } else if (pathname.includes('/jobs') || pathname.includes('/job')) {
+      setContext('job_search')
+    } else if (pathname.includes('/post') || pathname.includes('/employer')) {
+      setContext('employer')
+    } else if (pathname.includes('/dashboard')) {
+      // If employer in dashboard
+      setContext('employer')
+    } else {
+      setContext('general')
+    }
+  }, [location.pathname])
 
   if (!userId) return null
 
@@ -57,7 +78,7 @@ export default function GlobalAIAssistant() {
                 <div className="flex-1 min-h-0">
                   <AIChat 
                     userId={userId}
-                    context="general"
+                    context={context}
                     compact={false}
                   />
                 </div>
