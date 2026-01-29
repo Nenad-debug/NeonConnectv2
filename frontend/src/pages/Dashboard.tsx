@@ -9,6 +9,8 @@ import RecommendedJobs from '../components/candidate/RecommendedJobs'
 import ProfileQuickView from '../components/candidate/ProfileQuickView'
 import Notifications from '../components/candidate/Notifications'
 import ProfileSetup from '../components/candidate/ProfileSetup'
+import SuccessAnimation from '../components/common/SuccessAnimation'
+import AIGuidedTour from '../components/common/AIGuidedTour'
 import { TrendingUp, Briefcase, Heart, Sparkles, LogOut } from 'lucide-react'
 
 export default function Dashboard() {
@@ -16,6 +18,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
   const [showProfileSetup, setShowProfileSetup] = useState(false)
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
+  const [showAITour, setShowAITour] = useState(false)
   const navigate = useNavigate()
 
   // Mock data - kasnije iz baze
@@ -154,12 +158,26 @@ export default function Dashboard() {
       
       await profileService.saveCandidateProfile(user.id, profileData)
       
+      // Show success animation first, then start tour
       setShowProfileSetup(false)
+      setShowSuccessAnimation(true)
+      
       console.log('✅ [DASHBOARD] Profile setup completed')
     } catch (err: any) {
       console.error('❌ [DASHBOARD] Profile setup error:', err)
       throw new Error(err.message || 'Greška pri čuvanju profila')
     }
+  }
+
+  const handleSuccessAnimationComplete = () => {
+    setShowSuccessAnimation(false)
+    // Start the AI guided tour after success animation
+    setShowAITour(true)
+  }
+
+  const handleAITourComplete = () => {
+    setShowAITour(false)
+    console.log('✅ [DASHBOARD] AI tour completed')
   }
 
   if (loading) {
@@ -178,6 +196,20 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8">
       <Background />
+
+      {/* Success Animation - Prikazati na kraju Profile Setup */}
+      <SuccessAnimation
+        isVisible={showSuccessAnimation}
+        onComplete={handleSuccessAnimationComplete}
+        userName={user?.user_metadata?.full_name?.split(' ')[0]}
+      />
+
+      {/* AI Guided Tour */}
+      <AIGuidedTour
+        isActive={showAITour}
+        userName={user?.user_metadata?.full_name?.split(' ')[0]}
+        onComplete={handleAITourComplete}
+      />
 
       {/* Profile Setup Modal */}
       <ProfileSetup
@@ -271,7 +303,9 @@ export default function Dashboard() {
                       Prikaži sve →
                     </button>
                   </div>
-                  <RecommendedJobs jobs={mockRecommendedJobs.slice(0, 2)} />
+                  <div data-tour-jobs>
+                    <RecommendedJobs jobs={mockRecommendedJobs.slice(0, 2)} />
+                  </div>
                 </div>
 
                 {/* Recent Applications */}
@@ -292,10 +326,12 @@ export default function Dashboard() {
               {/* Right Column - Sidebar */}
               <div className="space-y-6">
                 {/* Profile Quick View */}
-                <ProfileQuickView user={user} completeness={65} />
+                <div data-tour-profile>
+                  <ProfileQuickView user={user} completeness={65} />
+                </div>
 
                 {/* Notifications */}
-                <div className="space-y-4">
+                <div className="space-y-4" data-tour-notifications>
                   <h3 className="text-lg font-bold">Notifikacije</h3>
                   <Notifications notifications={mockNotifications} />
                 </div>

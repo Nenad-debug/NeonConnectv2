@@ -7,9 +7,38 @@ interface ChatMessage {
   context?: string
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  maxRequestsPerMinute: 30,
+  maxRequestsPerHour: 300,
+  windowSize: 60000, // 1 minute in ms
+}
+
+class RateLimiter {
+  private requests: number[] = []
+
+  isAllowed(): boolean {
+    const now = Date.now()
+    const oneMinuteAgo = now - RATE_LIMIT_CONFIG.windowSize
+
+    // Remove old requests outside the window
+    this.requests = this.requests.filter((timestamp) => timestamp > oneMinuteAgo)
+
+    if (this.requests.length >= RATE_LIMIT_CONFIG.maxRequestsPerMinute) {
+      console.warn('⚠️ [AI SERVICE] Rate limit exceeded')
+      return false
+    }
+
+    this.requests.push(now)
+    return true
+  }
+}
+
+const rateLimiter = new RateLimiter()
+
 export const aiService = {
   /**
-   * Send message to AI and get response
+   * Send message to AI and get response with error handling and timeout
    */
   async sendMessage(
     userMessage: string,
@@ -17,31 +46,63 @@ export const aiService = {
     previousMessages?: ChatMessage[]
   ): Promise<string> {
     try {
-      console.log('🤖 [AI SERVICE] Sending message via Netlify Function')
-
-      // Call our Netlify serverless function instead of Gemini API directly
-      const response = await fetch('/.netlify/functions/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          context: _context,
-          previousMessages: previousMessages || [],
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        console.error('❌ Function error:', data)
-        return `Greška: ${data.error || 'Unknown error'}`
+      // Check rate limit
+      if (!rateLimiter.isAllowed()) {
+        console.warn('⚠️ [AI SERVICE] Rate limit exceeded - request blocked')
+        return 'Previše zahteva - pokušajte za nekoliko sekundi.'
       }
 
-      console.log('✅ Response received')
-      return data.response || 'Nema odgovora'
+      console.log('🤖 [AI SERVICE] Sending message via Netlify Function')
+
+      // Create abort controller for timeout (20 seconds for frontend)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 20000)
+
+      try {
+        // Call our Netlify serverless function
+        const response = await fetch('/.netlify/functions/ai-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: userMessage.slice(0, 5000), // Limit message size
+            context: _context,
+            previousMessages: previousMessages || [],
+          }),
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          console.error('❌ Function error:', data)
+
+          // Handle specific status codes
+          if (response.status === 429) {
+            return 'AI servis je trenutno preplavljeno zahtevima. Pokušajte za nekoliko sekundi.'
+          } else if (response.status === 503) {
+            return 'AI servis je privremeno nedostupan. Pokušajte za nekoliko sekundi.'
+          }
+
+          return `Greška: ${data.error || 'Nepoznata greška'}`
+        }
+
+        console.log('✅ Response received')
+        return data.response || 'Nisam mogao da generiram odgovor.'
+      } catch (err: any) {
+        clearTimeout(timeoutId)
+
+        if (err.name === 'AbortError') {
+          console.error('❌ [AI SERVICE] Request timeout')
+          return 'Zahtev je trajao previše dugo. Pokušajte sa kraćom porukom.'
+        }
+
+        throw err
+      }
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Error:', err)
-      return `Greška: ${err.message}`
+      return `Greška: ${err.message || 'Nepoznata greška'}`
     }
   },
 
@@ -83,7 +144,8 @@ export const aiService = {
       return data
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Save error:', err)
-      throw err
+      // Don't throw - silently fail to not interrupt chat
+      return { role, content, context }
     }
   },
 
@@ -111,13 +173,16 @@ export const aiService = {
 
       const { data, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.warn('⚠️ [AI SERVICE] Could not fetch history:', error.message)
+        return []
+      }
 
       // Reverse to get chronological order
       return (data || []).reverse()
     } catch (err: any) {
       console.error('❌ [AI SERVICE] History fetch error:', err)
-      throw err
+      return []
     }
   },
 
@@ -144,7 +209,7 @@ export const aiService = {
       console.log('✅ [AI SERVICE] Chat history cleared')
     } catch (err: any) {
       console.error('❌ [AI SERVICE] Clear error:', err)
-      throw err
+      // Silently fail
     }
   },
 

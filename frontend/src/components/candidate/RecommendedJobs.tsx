@@ -103,6 +103,7 @@ export default function RecommendedJobs({
                     ? 'bg-rose-500/20 text-rose-400'
                     : 'text-slate-400 hover:bg-rose-500/20 hover:text-rose-400'
                 } disabled:opacity-50`}
+                data-tour-save
               >
                 <Heart className={`w-5 h-5 ${job.saved ? 'fill-current' : ''}`} />
               </button>
@@ -165,6 +166,7 @@ export default function RecommendedJobs({
                 onClick={() => handleApply(job.id)}
                 disabled={applyingId === job.id}
                 className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-semibold hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300 flex items-center justify-center gap-2 group/btn disabled:opacity-50"
+                data-tour-apply
               >
                 {applyingId === job.id ? 'Slanje...' : 'Prijavi se'}
                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />

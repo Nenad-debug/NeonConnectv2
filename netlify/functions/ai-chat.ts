@@ -1,9 +1,63 @@
 // Netlify Serverless Function for AI Chat
+// Enhanced with timeout, retry logic, and better error handling
+
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  maxDelayMs: 5000,
+  backoffMultiplier: 2,
+}
+
+// Timeout configuration
+const REQUEST_TIMEOUT_MS = 30000
+
+// Helper function to implement exponential backoff retry
+async function retryFetch(
+  url: string,
+  options: RequestInit,
+  retries = 0
+): Promise<Response> {
+  let timeoutId: any = null
+  try {
+    // Create abort controller for timeout
+    const controller = new AbortController()
+    timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+    return response
+  } catch (error: any) {
+    if (timeoutId) clearTimeout(timeoutId)
+
+    // Check if it's a timeout or network error
+    const isTimeoutError = error.name === 'AbortError'
+    const isNetworkError = error instanceof TypeError
+
+    if ((isTimeoutError || isNetworkError) && retries < RETRY_CONFIG.maxRetries) {
+      const delayMs = Math.min(
+        RETRY_CONFIG.initialDelayMs * Math.pow(RETRY_CONFIG.backoffMultiplier, retries),
+        RETRY_CONFIG.maxDelayMs
+      )
+
+      console.log(`⏳ Retry attempt ${retries + 1}/${RETRY_CONFIG.maxRetries} after ${delayMs}ms`)
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+
+      return retryFetch(url, options, retries + 1)
+    }
+
+    throw error
+  }
+}
 
 export const handler = async (event: any) => {
   console.log('📨 AI Function invoked')
   console.log('Method:', event.httpMethod)
-  
+
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -29,11 +83,21 @@ export const handler = async (event: any) => {
 
     // Validate input
     if (!message || typeof message !== 'string') {
-      console.error('❌ Invalid message')
+      console.error('❌ Invalid message format')
       return {
         statusCode: 400,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Invalid message' }),
+        body: JSON.stringify({ error: 'Nevazeća poruka - obavezna je tekstualna poruka' }),
+      }
+    }
+
+    // Sanitize message to prevent injection attacks
+    if (message.length > 5000) {
+      console.error('❌ Message too long')
+      return {
+        statusCode: 400,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Poruka je preslužna (max 5000 karaktera)' }),
       }
     }
 
@@ -44,7 +108,7 @@ export const handler = async (event: any) => {
       return {
         statusCode: 500,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'API key not configured' }),
+        body: JSON.stringify({ error: 'AI servis nije dostupan - pokušajte kasnije' }),
       }
     }
     console.log('✅ AIML API key found')
@@ -176,56 +240,91 @@ export const handler = async (event: any) => {
 
     const systemPrompt = systemPrompts[context] || systemPrompts.default
 
-    // Call AIML API (OpenAI-compatible)
-    const response = await fetch(
-      `https://api.aimlapi.com/v1/chat/completions`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
+    // Call AIML API with retry logic
+    console.log('🔄 Calling AIML API with timeout and retry...')
+    let response: Response
+    try {
+      response = await retryFetch(
+        'https://api.aimlapi.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...conversationHistory,
+            ],
+            temperature: 0.7,
+            max_tokens: 1024,
+          }),
+        }
+      )
+    } catch (fetchError: any) {
+      console.error('❌ AIML API request failed after retries:', fetchError.message)
+      return {
+        statusCode: 503,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
+          error: 'AI servis privremeno nedostupan - pokušajte za nekoliko sekundi',
         }),
       }
-    )
+    }
 
     const data = await response.json()
 
     if (!response.ok) {
       console.error('❌ AIML API error:', data)
+
+      // Handle specific error cases
+      if (response.status === 401) {
+        return {
+          statusCode: 500,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Greška autentifikacije AI servisa' }),
+        }
+      } else if (response.status === 429) {
+        return {
+          statusCode: 429,
+          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            error: 'Previše zahteva - pokušajte za nekoliko sekundi',
+          }),
+        }
+      }
+
       return {
         statusCode: response.status,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: data.error?.message || 'AIML API error' }),
+        body: JSON.stringify({
+          error: data.error?.message || 'AI servis je vratio grešku',
+        }),
       }
     }
 
     // Extract response text from AIML (GPT-3.5)
     const responseText =
       data.choices?.[0]?.message?.content ||
-      'Извините, нема одговора од AI-а.'
+      'Izvinjavam se, nisam mogao da generiram odgovor. Pokušajte ponovo.'
 
-    console.log('✅ AIML response received')
+    console.log('✅ AIML response received successfully')
     return {
       statusCode: 200,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
       body: JSON.stringify({ response: responseText }),
     }
   } catch (error: any) {
-    console.error('❌ AI Function error:', error)
+    console.error('❌ AI Function error:', error.message)
+
+    // Generic error response
     return {
       statusCode: 500,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        error: error.message || 'Internal server error',
+        error: 'Greška na serveru - pokušajte kasnije',
       }),
     }
   }
