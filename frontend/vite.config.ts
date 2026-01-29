@@ -10,7 +10,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: undefined
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('react/')) return 'react'
+            if (id.includes('react-router')) return 'router'
+            if (id.includes('lucide-react')) return 'icons'
+            return 'vendor'
+          }
+        },
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]'
       }
     },
     minify: 'terser',
@@ -19,6 +28,8 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true
       }
-    }
+    },
+    cssCodeSplit: true,
+    sourcemap: false
   }
 })

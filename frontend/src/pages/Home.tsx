@@ -29,11 +29,11 @@ export default function Home() {
       <Background />
 
       {/* ===== HERO SECTION ===== */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
-        {/* Animated background elements */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 overflow-hidden">
+        {/* Animated background elements — static on mobile for perf */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse hidden sm:block" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse hidden sm:block" style={{ animationDelay: '1s' }} />
         </div>
 
         <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -44,7 +44,7 @@ export default function Home() {
                 ✨ Novi način pronalaženja posla
               </div>
               
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 Pronađi <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-600 bg-clip-text text-transparent">posao</span> koji transformiše tvoju karijeru
               </h1>
             </div>
@@ -82,7 +82,7 @@ export default function Home() {
 
           {/* Right: Featured Jobs Card */}
           <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <div className="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/40 p-8 rounded-2xl shadow-2xl border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300 backdrop-blur-sm">
+            <div className="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/60 md:from-slate-800/60 md:to-slate-900/40 p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300 md:backdrop-blur-sm">
               {/* Glow effect on hover */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-all duration-300"></div>
 
@@ -129,7 +129,7 @@ export default function Home() {
       </section>
 
       {/* ===== FEATURES SECTION ===== */}
-      <section className="py-20 px-4 relative">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-4xl md:text-5xl font-bold">
@@ -209,7 +209,7 @@ export default function Home() {
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             {/* Content card */}
-            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 md:p-12 space-y-6">
+            <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sm:p-8 md:p-12 space-y-6">
               <div className="flex items-center gap-4">
                 <Mail className="w-10 h-10 text-blue-400" />
                 <h2 className="text-3xl md:text-4xl font-bold">Kontaktiraj nas</h2>
@@ -233,8 +233,8 @@ export default function Home() {
 
       {/* Contact Modal */}
       {showContactModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 w-full max-w-md space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed inset-0 bg-black/60 md:bg-black/50 md:backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-900/95 border border-slate-700/50 rounded-2xl p-6 sm:p-8 w-full max-w-md space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 my-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold">Pošalji nam poruku</h3>
@@ -340,8 +340,8 @@ export default function Home() {
 
       {/* Testing Guide Modal */}
       {showTestingGuide && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 w-full max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 md:bg-black/50 md:backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-900/95 border border-slate-700/50 rounded-2xl p-6 sm:p-8 w-full max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto my-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-3xl font-bold flex items-center gap-2">

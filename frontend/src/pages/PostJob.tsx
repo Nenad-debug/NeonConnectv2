@@ -33,32 +33,26 @@ export default function PostJob() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-20">
+    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8 sm:py-20">
       <Background />
 
-      <div className="relative max-w-4xl mx-auto px-4 space-y-8">
-        {/* Back button */}
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 space-y-6 sm:space-y-8">
         <button 
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+          className="inline-flex items-center gap-2 py-2 min-h-[44px] text-blue-400 hover:text-blue-300 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           Nazad
         </button>
 
-        {/* Header */}
-        <div className="space-y-4">
-          <h1 className="text-5xl font-black">Objavi novi posao</h1>
-          <p className="text-xl text-slate-300">Pronađi idealne kandidate za tvoju kompaniju</p>
+        <div className="space-y-2 sm:space-y-4">
+          <h1 className="text-3xl sm:text-5xl font-black">Objavi novi posao</h1>
+          <p className="text-base sm:text-xl text-slate-300">Pronađi idealne kandidate za tvoju kompaniju</p>
         </div>
 
-        {/* Main message - Under Development */}
         <div className="relative group">
-          {/* Gradient border background */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 via-orange-600 to-yellow-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          {/* Content card */}
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 space-y-6">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 via-orange-600 to-yellow-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block" />
+          <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sm:p-12 space-y-6">
             <div className="flex items-start gap-4">
               <Zap className="w-12 h-12 text-yellow-400 flex-shrink-0" />
               <div className="space-y-3 flex-1">

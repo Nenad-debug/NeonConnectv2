@@ -294,7 +294,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   // Guard: avoid white screen if step is missing
   if (!step) {
     return (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 md:bg-black/70 md:backdrop-blur-sm">
         <div className="bg-slate-800 border border-slate-600 rounded-xl p-6 max-w-md text-center">
           <p className="text-slate-200 mb-4">Tour je spreman.</p>
           <button
@@ -310,7 +310,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur">
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 md:bg-black/50 md:backdrop-blur">
         <div className="bg-slate-800 border border-red-500/30 rounded-xl p-6 max-w-md">
           <p className="text-red-400 mb-4">Došlo je do greške pri učitavanju tour-a</p>
           <button
@@ -325,7 +325,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   }
 
   return (
-    <div className="fixed inset-0 z-[110] bg-black/60">
+    <div className="fixed inset-0 z-[110] bg-black/70 md:bg-black/60">
       <style>{`
         @keyframes pulse-highlight {
           0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4), 0 0 0 8px rgba(59, 130, 246, 0.2); }
@@ -387,13 +387,13 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
       {/* Overlay: full screen when no highlight; 4 strips (frame) when highlight so that area stays UNBLURRED */}
       {highlightPosition ? (
         <>
-          <div className="fixed left-0 top-0 right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ height: Math.max(0, highlightPosition.top) }} aria-hidden="true" />
-          <div className="fixed left-0 right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top, left: 0, width: highlightPosition.left, height: highlightPosition.height }} aria-hidden="true" />
-          <div className="fixed right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top, left: highlightPosition.left + highlightPosition.width, right: 0, height: highlightPosition.height }} aria-hidden="true" />
-          <div className="fixed left-0 right-0 bottom-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top + highlightPosition.height }} aria-hidden="true" />
+          <div className="fixed left-0 top-0 right-0 z-[100] bg-black/75 md:bg-black/70 md:backdrop-blur-sm" style={{ height: Math.max(0, highlightPosition.top) }} aria-hidden="true" />
+          <div className="fixed left-0 right-0 z-[100] bg-black/75 md:bg-black/70 md:backdrop-blur-sm" style={{ top: highlightPosition.top, left: 0, width: highlightPosition.left, height: highlightPosition.height }} aria-hidden="true" />
+          <div className="fixed right-0 z-[100] bg-black/75 md:bg-black/70 md:backdrop-blur-sm" style={{ top: highlightPosition.top, left: highlightPosition.left + highlightPosition.width, right: 0, height: highlightPosition.height }} aria-hidden="true" />
+          <div className="fixed left-0 right-0 bottom-0 z-[100] bg-black/75 md:bg-black/70 md:backdrop-blur-sm" style={{ top: highlightPosition.top + highlightPosition.height }} aria-hidden="true" />
         </>
       ) : (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm" aria-hidden="true" />
+        <div className="fixed inset-0 z-[100] bg-black/75 md:bg-black/70 md:backdrop-blur-sm" aria-hidden="true" />
       )}
 
       {/* Highlight border around unblurred area */}
@@ -549,7 +549,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
       {/* Floating AI indicator */}
       {currentStep === 0 && (
-        <div className="fixed top-8 left-8 z-[110] flex items-center gap-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm">
+        <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-[110] flex items-center gap-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-3 sm:p-4 md:backdrop-blur-sm">
           <div className="tour-pointer"></div>
           <div>
             <p className="text-sm font-semibold text-blue-300">Tour vođen od AI asistenta</p>

@@ -1,7 +1,7 @@
 import { Briefcase, Users, TrendingUp, Zap, Target, Award, Rocket, Star, Code, Lightbulb, MessageSquare, Smartphone, Package, Headphones, GitBranch, Palette } from 'lucide-react'
 
 export default function Background() {
-  // Floating icons data
+  // Floating icons — fewer on mobile for perf
   const floatingIcons = [
     { Icon: Briefcase, x: 10, y: 20, duration: 8, delay: 0 },
     { Icon: Users, x: 85, y: 15, duration: 10, delay: 1 },
@@ -20,7 +20,6 @@ export default function Background() {
     { Icon: GitBranch, x: 70, y: 80, duration: 10, delay: 1.4 },
     { Icon: Palette, x: 45, y: 70, duration: 12, delay: 0.6 },
   ]
-
   return (
     <>
       {/* CSS for animations */}
@@ -40,20 +39,23 @@ export default function Background() {
           50% { transform: translateY(-25px) rotate(15deg); }
         }
         
-        .animate-float-slow {
-          animation: floatSlow infinite ease-in-out;
-        }
-        
-        .animate-float-fast {
-          animation: floatFast infinite ease-in-out;
+        .animate-float-slow { animation: floatSlow infinite ease-in-out; }
+        .animate-float-fast { animation: floatFast infinite ease-in-out; }
+        .bg-float-icon { animation: float 10s ease-in-out infinite; }
+        .bg-float-slow { animation: floatSlow 12s ease-in-out infinite; }
+        .bg-float-fast { animation: floatFast 9s ease-in-out infinite; }
+        @media (max-width: 768px) {
+          .bg-float-icon, .bg-float-slow, .bg-float-fast { animation: none !important; }
+          .bg-float-hide-mobile { display: none !important; }
+          .bg-blob { animation: none !important; }
         }
       `}</style>
 
-      {/* Background gradient blobs */}
+      {/* Background gradient blobs — no animation on mobile for perf */}
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-10 -top-20 w-96 h-96 rounded-full bg-gradient-to-br from-indigo-600 via-purple-500 to-transparent opacity-40 filter blur-3xl animate-float" />
-        <div className="absolute right-0 top-1/4 w-80 h-80 rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-transparent opacity-30 filter blur-2xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute left-1/4 bottom-0 w-[520px] h-[320px] rounded-[40%] bg-gradient-to-br from-slate-700 via-indigo-700 to-transparent opacity-20 filter blur-2xl animate-float" style={{ animationDuration: '10s', animationDelay: '4s' }} />
+        <div className="bg-blob absolute -left-10 -top-20 w-96 h-96 rounded-full bg-gradient-to-br from-indigo-600 via-purple-500 to-transparent opacity-40 filter blur-3xl animate-float" />
+        <div className="bg-blob absolute right-0 top-1/4 w-80 h-80 rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-transparent opacity-30 filter blur-2xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="bg-blob absolute left-1/4 bottom-0 w-[520px] h-[320px] rounded-[40%] bg-gradient-to-br from-slate-700 via-indigo-700 to-transparent opacity-20 filter blur-2xl animate-float" style={{ animationDuration: '10s', animationDelay: '4s' }} />
         <div
           className="absolute inset-0"
           style={{
@@ -62,24 +64,23 @@ export default function Background() {
         />
       </div>
 
-      {/* Floating Icons Background */}
+      {/* Floating Icons — no animation on mobile for perf; hide half on small screens */}
       <div className="pointer-events-none fixed inset-0 -z-5 overflow-hidden">
         {floatingIcons.map((item, idx) => {
           const Icon = item.Icon
-          const animationName = idx % 3 === 0 ? 'floatSlow' : idx % 3 === 1 ? 'float' : 'floatFast'
-          
+          const animClass = idx % 3 === 0 ? 'bg-float-slow' : idx % 3 === 1 ? 'bg-float-icon' : 'bg-float-fast'
+          const hideOnMobile = idx >= 8
           return (
             <div
               key={idx}
-              className="absolute opacity-10 hover:opacity-20 transition-opacity duration-300"
+              className={`absolute opacity-10 hover:opacity-20 transition-opacity duration-300 ${animClass} ${hideOnMobile ? 'bg-float-hide-mobile' : ''}`}
               style={{
                 left: `${item.x}%`,
                 top: `${item.y}%`,
-                animation: `${animationName} ${item.duration}s ease-in-out infinite`,
                 animationDelay: `${item.delay}s`,
               }}
             >
-              <Icon className="w-16 h-16 md:w-20 md:h-20 text-blue-400" strokeWidth={1.5} />
+              <Icon className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-blue-400" strokeWidth={1.5} />
             </div>
           )
         })}

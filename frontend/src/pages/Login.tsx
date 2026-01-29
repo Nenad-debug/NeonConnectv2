@@ -42,17 +42,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen gradient-bg flex items-center justify-center px-4 sm:px-6 py-8 relative overflow-hidden">
       <Background />
 
       <div className="w-full max-w-md">
-        {/* Card with glassmorphism */}
         <div className="relative group">
-          {/* Gradient border effect */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
-          
-          {/* Main card */}
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300 hidden sm:block" />
+          <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-2xl">
             {/* Header */}
             <div className="space-y-2 mb-8">
               <h2 className="text-4xl font-black text-white">Prijava</h2>

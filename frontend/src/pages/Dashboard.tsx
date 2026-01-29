@@ -251,19 +251,18 @@ export default function Dashboard() {
         onComplete={handleProfileSetupComplete}
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 space-y-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 space-y-6 sm:space-y-8">
         {/* ===== HEADER SECTION ===== */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-5xl font-black">Dashboard</h1>
-            <p className="text-xl text-slate-300">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="text-3xl sm:text-5xl font-black">Dashboard</h1>
+            <p className="text-base sm:text-xl text-slate-300 truncate">
               Dobrodošao/la, <span className="text-blue-400 font-semibold">{user?.user_metadata?.full_name || user?.email}</span>
             </p>
           </div>
-          
           <button
             onClick={handleLogout}
-            className="group px-4 py-2 rounded-lg border border-slate-700/50 text-slate-300 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-300 flex items-center gap-2"
+            className="self-start sm:self-auto group px-4 py-3 min-h-[44px] rounded-lg border border-slate-700/50 text-slate-300 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-200 flex items-center gap-2"
           >
             <LogOut className="w-5 h-5" />
             Odjava
@@ -271,7 +270,7 @@ export default function Dashboard() {
         </div>
 
         {/* ===== QUICK STATS ===== */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'Moje aplikacije', value: mockApplications.length, icon: Briefcase, color: 'from-blue-600' },
             { label: 'Sačuvani poslovi', value: mockSavedJobs.length, icon: Heart, color: 'from-rose-600' },
@@ -280,8 +279,8 @@ export default function Dashboard() {
             const Icon = stat.icon
             return (
               <div key={idx} className="group relative animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                <div className={`absolute -inset-0.5 bg-gradient-to-r ${stat.color} to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6 flex items-center gap-4">
+                <div className={`absolute -inset-0.5 bg-gradient-to-r ${stat.color} to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block`} />
+                <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 sm:p-6 flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} to-purple-700 bg-opacity-20 flex items-center justify-center`}>
                     <Icon className="w-6 h-6 text-blue-300" />
                   </div>
@@ -296,7 +295,7 @@ export default function Dashboard() {
         </div>
 
         {/* ===== TABS (tour: filtriranje / pregled sekcija) ===== */}
-        <div className="flex gap-4 border-b border-slate-700/50" data-tour-filter>
+        <div className="flex gap-2 sm:gap-4 border-b border-slate-700/50 overflow-x-auto pb-px -mx-1 scrollbar-hide" data-tour-filter>
           {[
             { id: 'overview', label: '📊 Pregled' },
             { id: 'applications', label: '📤 Moje aplikacije' },
@@ -305,7 +304,7 @@ export default function Dashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-3 font-semibold border-b-2 transition-all duration-300 ${
+              className={`flex-shrink-0 px-3 sm:px-4 py-3 min-h-[44px] font-semibold border-b-2 transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-400'
                   : 'border-transparent text-slate-400 hover:text-slate-300'

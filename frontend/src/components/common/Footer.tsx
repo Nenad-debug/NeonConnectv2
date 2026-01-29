@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900/80 backdrop-blur-xl border-t border-slate-700/50 text-white mt-12">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-3 gap-8 mb-8">
+    <footer className="bg-slate-900/95 md:bg-slate-900/80 md:backdrop-blur-xl border-t border-slate-700/50 text-white mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8">
           <div>
             <h3 className="font-bold mb-4 text-blue-300">Za kandidate</h3>
             <ul className="space-y-2 text-sm text-slate-400">

@@ -54,22 +54,19 @@ export default function Jobs() {
   )
 
   return (
-    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-20">
+    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8 sm:py-20">
       <Background />
 
-      <div className="relative max-w-6xl mx-auto px-4 space-y-12">
-        {/* Header */}
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-5xl font-black">Dostupni poslovi</h1>
-          <p className="text-xl text-slate-300">Pronađi posao koji te zanima</p>
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
+        <div className="text-center space-y-2 sm:space-y-4 mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-5xl font-black">Dostupni poslovi</h1>
+          <p className="text-base sm:text-xl text-slate-300">Pronađi posao koji te zanima</p>
         </div>
 
-        {/* Search Section */}
-        <div className="grid md:grid-cols-2 gap-4 mb-12">
-          {/* Search by title/company */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 sm:mb-12">
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 hidden md:block" />
+            <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 flex items-center gap-3">
               <Search className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <input 
                 type="text"
@@ -81,10 +78,9 @@ export default function Jobs() {
             </div>
           </div>
 
-          {/* Filter by location */}
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 hidden md:block" />
+            <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 flex items-center gap-3">
               <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <select 
                 value={selectedLocation}
@@ -105,14 +101,12 @@ export default function Jobs() {
           <div className="space-y-6">
             {filteredJobs.map(job => (
               <div key={job.id} className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 hover:shadow-lg transition-all duration-300">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                    {/* Job Info */}
-                    <div className="flex-1 space-y-4">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block" />
+                <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sm:p-8 hover:shadow-lg transition-all duration-300">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 sm:gap-6">
+                    <div className="flex-1 space-y-3 sm:space-y-4">
                       <div>
-                        <h3 className="text-2xl font-bold text-white mb-2">{job.title}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{job.title}</h3>
                         <p className="text-lg text-blue-400 font-semibold">{job.company}</p>
                       </div>
 
@@ -134,11 +128,10 @@ export default function Jobs() {
                       </div>
                     </div>
 
-                    {/* Apply Button */}
                     <div className="flex flex-col gap-4 md:w-48">
                       <Link 
                         to="/signup"
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-bold text-white hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-bold text-white hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 whitespace-nowrap"
                       >
                         Apliciraj
                         <ArrowRight className="w-4 h-4" />
@@ -151,19 +144,16 @@ export default function Jobs() {
           </div>
         ) : (
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            
-            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block" />
+            <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 sm:p-12 text-center">
               <p className="text-xl text-slate-300">Nema dostupnih poslova koji odgovaraju vašoj pretrazi.</p>
             </div>
           </div>
         )}
 
-        {/* CTA */}
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center space-y-4">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block" />
+          <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 sm:p-12 text-center space-y-4">
             <h3 className="text-2xl font-bold">Nije našao/la ono što tražiš?</h3>
             <p className="text-slate-300 mb-6">Kreiraj profil i budi obavešten/a o novim poslovima koji te zanimaju!</p>
             <Link 

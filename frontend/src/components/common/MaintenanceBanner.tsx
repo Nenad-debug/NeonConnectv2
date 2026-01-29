@@ -88,14 +88,14 @@ export default function MaintenanceBanner() {
       `}</style>
 
       <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="maintenance-title"
       >
-        {/* Backdrop */}
+        {/* Backdrop — no blur on mobile for perf */}
         <div
-          className={`maintenance-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${isEntered ? 'opacity-100' : 'opacity-0'}`}
+          className={`maintenance-backdrop absolute inset-0 bg-black/75 md:bg-black/70 md:backdrop-blur-sm transition-opacity duration-300 ${isEntered ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => handleClose(false)}
           aria-hidden="true"
         />

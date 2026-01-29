@@ -29,11 +29,11 @@ export default function Navbar() {
         }
       `}</style>
 
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 text-white shadow-lg border-b border-slate-700/50">
+      <nav className="sticky top-0 z-50 md:backdrop-blur-xl bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-slate-900/95 md:from-slate-900/80 md:via-slate-800/70 md:to-slate-900/80 text-white shadow-lg border-b border-slate-700/50">
         {/* Gradient line at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
 
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           {/* Logo */}
           <Link 
             to="/" 
@@ -78,10 +78,10 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button — min 44px touch target */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-300"
+            className="md:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg bg-slate-800/50 hover:bg-slate-700/50 active:bg-slate-700 transition-colors duration-200"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -94,32 +94,32 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-xl animate-fade-in">
-            <div className="max-w-7xl mx-auto px-6 py-4 space-y-3">
+          <div className="md:hidden border-t border-slate-700/50 bg-slate-900/98 md:bg-slate-900/95 md:backdrop-blur-xl animate-fade-in">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-1">
               <Link 
                 to="/jobs"
-                className="block px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 transition-all duration-300"
+                className="block px-4 py-3 min-h-[44px] flex items-center rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 active:bg-slate-800 transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Poslovi
               </Link>
               <Link 
                 to="/post-job"
-                className="block px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 transition-all duration-300"
+                className="block px-4 py-3 min-h-[44px] flex items-center rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 active:bg-slate-800 transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Objavi posao
               </Link>
               <Link 
                 to="/login"
-                className="block px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 transition-all duration-300"
+                className="block px-4 py-3 min-h-[44px] flex items-center rounded-lg text-slate-300 hover:bg-slate-800 hover:text-blue-300 active:bg-slate-800 transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Prijava
               </Link>
               <Link 
                 to="/signup"
-                className="block px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-semibold text-white hover:from-blue-500 hover:to-blue-600 transition-all duration-300 text-center"
+                className="block px-4 py-3 min-h-[44px] flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-semibold text-white hover:from-blue-500 hover:to-blue-600 active:from-blue-600 transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Registracija
