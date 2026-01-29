@@ -199,11 +199,9 @@ export default function Dashboard() {
 
   const handleSuccessAnimationComplete = () => {
     console.log('🎉 [DASHBOARD] Success animation completed, starting tour...')
-    setShowSuccessAnimation(false)
-    // Delay before starting tour to ensure DOM is ready
-    setTimeout(() => {
-      setShowAITour(true)
-    }, 500)
+    // Show tour first (z-110 above success z-100), then hide success so no white flash
+    setShowAITour(true)
+    setTimeout(() => setShowSuccessAnimation(false), 100)
   }
 
   const handleAITourComplete = () => {

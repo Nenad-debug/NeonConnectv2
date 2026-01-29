@@ -203,6 +203,23 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   const step = tourSteps[currentStep]
   const isLastStep = currentStep === tourSteps.length - 1
 
+  // Guard: avoid white screen if step is missing
+  if (!step) {
+    return (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="bg-slate-800 border border-slate-600 rounded-xl p-6 max-w-md text-center">
+          <p className="text-slate-200 mb-4">Tour je spreman.</p>
+          <button
+            onClick={onComplete}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            Nastavi
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur">
@@ -220,7 +237,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   }
 
   return (
-    <div className="fixed inset-0 z-[110]">
+    <div className="fixed inset-0 z-[110] bg-black/60">
       <style>{`
         @keyframes pulse-highlight {
           0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4), 0 0 0 8px rgba(59, 130, 246, 0.2); }
