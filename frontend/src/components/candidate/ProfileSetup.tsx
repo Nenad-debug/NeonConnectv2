@@ -27,16 +27,46 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
       instruction: 'Iz odgovora izvuci samo ime i prezime.',
     },
     {
-      title: 'Naprati kratku biografiju (ko si i šta voliš da radiš)',
-      fields: ['bio'],
-      placeholder: 'npr. Ja sam frontend developer sa 3 godine iskustva...',
-      instruction: 'Iz odgovora izvuci biografiju (100-200 reči).',
+      title: 'Koja je tvoja trenutna pozicija/zanimanje?',
+      fields: ['current_position'],
+      placeholder: 'npr. Frontend Developer, UI/UX Designer',
+      instruction: 'Iz odgovora izvuci samo poziciju.',
     },
     {
-      title: 'Navedи svoje ključne vještine (odvojene zarezima)',
+      title: 'Koliko godina iskustva imas?',
+      fields: ['years_experience'],
+      placeholder: 'npr. 5 godina',
+      instruction: 'Iz odgovora izvuci samo broj godina.',
+    },
+    {
+      title: 'Naprati kratku biografiju (ko si i sta volis da radis)',
+      fields: ['bio'],
+      placeholder: 'npr. Ja sam frontend developer sa 3 godine iskustva...',
+      instruction: 'Iz odgovora izvuci biografiju (150-250 reci).',
+    },
+    {
+      title: 'Koje su tvoje kljucne vestine?',
       fields: ['skills'],
       placeholder: 'npr. React, TypeScript, Node.js, PostgreSQL',
-      instruction: 'Iz odgovora izvuci vještine kao niz (odvojene zarezima). Spremi kao JSON array: ["skill1", "skill2"]',
+      instruction: 'Iz odgovora izvuci vestine kao niz (odvojene zarezima). Spremi kao JSON array: ["skill1", "skill2"]',
+    },
+    {
+      title: 'Koje je tvoje najmanje obrazovanje?',
+      fields: ['education'],
+      placeholder: 'npr. Fakultet za informatiku',
+      instruction: 'Iz odgovora izvuci samo naziv obrazovanja.',
+    },
+    {
+      title: 'U kojoj lokaciji trazis posao?',
+      fields: ['location'],
+      placeholder: 'npr. Beograd, Srbija',
+      instruction: 'Iz odgovora izvuci samo lokaciju.',
+    },
+    {
+      title: 'Koja je tvoja ocekivana plata (mesecno)?',
+      fields: ['expected_salary'],
+      placeholder: 'npr. 1500 EUR',
+      instruction: 'Iz odgovora izvuci samo broj i valutu.',
     },
   ]
 
@@ -59,9 +89,9 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
 
 Zdravo${user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name.split(' ')[0]}` : ''}! 👋 
 
-Samo 3 pitanja i tvoj profil će biti spreman! Odgovori iskreno i detaljno - koristiće se za pronalaženje savršenih poslova za tebe.
+${wizardQuestions.length} pitanja i tvoj profil ce biti spreman! Odgovori iskreno i detaljno - koristicese za pronalazenje savrsenih poslova za tebe.
 
-**Počnimo! 🎯**
+**Pocnimo! 🎯**
 
 ${wizardQuestions[0].title}`
 
@@ -91,7 +121,8 @@ ${wizardQuestions[0].title}`
         
 ${currentQuestion.instruction}
 
-Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
+VAZNO: Koristi samo EKAVISKI oblik i LATINICU (ne ćirilicu).
+Vrati SAMO ekstrakovan odgovor bez dodatnog objasnjenja.`
 
         const response = await fetch('/.netlify/functions/ai-chat', {
           method: 'POST',
@@ -104,7 +135,38 @@ Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
         })
 
         const data = await response.json()
-        const aiResponse = data.response || userMessage
+        let aiResponse = data.response || userMessage
+        
+        // Ensure ekavica and latin characters
+        aiResponse = aiResponse
+          .replace(/ћ/g, 'ć')
+          .replace(/Ћ/g, 'Ć')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D')
+          .replace(/ж/g, 'z')
+          .replace(/Ж/g, 'Z')
+          .replace(/ч/g, 'č')
+          .replace(/Ч/g, 'Č')
+          .replace(/ш/g, 'š')
+          .replace(/Ш/g, 'Š')
+          .replace(/ј/g, 'j')
+          .replace(/Ј/g, 'J')
+          .replace(/њ/g, 'nj')
+          .replace(/Њ/g, 'Nj')
+          .replace(/љ/g, 'lj')
+          .replace(/Љ/g, 'Lj')
+          .replace(/а/g, 'a')
+          .replace(/А/g, 'A')
+          .replace(/е/g, 'e')
+          .replace(/Е/g, 'E')
+          .replace(/и/g, 'i')
+          .replace(/И/g, 'I')
+          .replace(/о/g, 'o')
+          .replace(/О/g, 'O')
+          .replace(/у/g, 'u')
+          .replace(/У/g, 'U')
+          .replace(/ы/g, 'i')
+          .replace(/Ы/g, 'I')
 
         // Save extracted data
         const newProfileData = {
@@ -120,8 +182,8 @@ Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
             role: 'assistant',
             content: `✅ Spreo/la! Tvoj odgovor je: "${aiResponse}"\n\n${
               wizardStep < wizardQuestions.length - 1
-                ? `Sledеće pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
-                : `🎉 Svi podaci su prikupljeni! Čuvam tvoj profil...`
+                ? `Sledece pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
+                : `🎉 Svi podaci su prikupljeni! Cuva se tvoj profil...`
             }`,
           },
         ])
@@ -137,7 +199,7 @@ Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
       console.error('Error:', err)
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: `Greška: ${(err as any).message}` },
+        { role: 'assistant', content: `Greska: ${(err as any).message}` },
       ])
     } finally {
       setLoading(false)
@@ -184,14 +246,19 @@ Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
         ...prev,
         {
           role: 'assistant',
-          content: `🎊 Bravo! Tvoj profil je uspešno sačuvan!
+          content: `🎊 Bravo! Tvoj profil je uspesno sacuvan!
 
-📝 **Sačuvani podaci:**
+📝 **Sacuvani podaci:**
 👤 Ime: ${firstName} ${lastName}
-📄 Biografija: ${data.bio}
-🛠️ Vještine: ${Array.isArray(skills) ? skills.join(', ') : skills}
+💼 Pozicija: ${data.current_position || 'Nije navedeno'}
+⏱️ Iskustvo: ${data.years_experience || 'Nije navedeno'}
+📄 Biografija: ${data.bio || 'Nije navedeno'}
+🛠️ Vestine: ${Array.isArray(skills) ? skills.join(', ') : skills || 'Nije navedeno'}
+🎓 Obrazovanje: ${data.education || 'Nije navedeno'}
+📍 Lokacija: ${data.location || 'Nije navedeno'}
+💰 Ocekivana plata: ${data.expected_salary || 'Nije navedeno'}
 
-Sada možeš da tražiš poslove! 🚀`,
+Sada mozes da trazis poslove! 🚀`,
         },
       ])
 
@@ -201,6 +268,11 @@ Sada možeš da tražiš poslove! 🚀`,
           last_name: lastName,
           bio: data.bio,
           skills: skills,
+          current_position: data.current_position,
+          years_experience: data.years_experience,
+          education: data.education,
+          location: data.location,
+          expected_salary: data.expected_salary,
         })
       }, 2000)
     } catch (err: any) {
@@ -209,7 +281,7 @@ Sada možeš da tražiš poslove! 🚀`,
         ...prev,
         {
           role: 'assistant',
-          content: `Greška pri čuvanju: ${err.message}`,
+          content: `Greska pri cuvanju: ${err.message}`,
         },
       ])
     } finally {
@@ -248,9 +320,9 @@ Sada možeš da tražiš poslove! 🚀`,
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-lg opacity-75"></div>
 
         {/* Modal Content */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900/95 rounded-3xl p-8 space-y-6 flex flex-col h-full border border-blue-500/30 shadow-2xl">
+        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900/95 rounded-3xl p-8 space-y-6 flex flex-col h-full border border-blue-500/30 shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
                 <Sparkles className="w-6 h-6 text-white" />
@@ -259,14 +331,14 @@ Sada možeš da tražiš poslove! 🚀`,
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   Profil Wizard
                 </h2>
-                <p className="text-xs text-slate-400">AI će te vodit kroz postavljanje profila</p>
+                <p className="text-xs text-slate-400">AI ce te voditi kroz postavljanje profila</p>
               </div>
             </div>
           </div>
 
           {/* Progress Bar */}
           {wizardStep < wizardQuestions.length && !isCompleting && (
-            <div className="space-y-2">
+            <div className="space-y-2 flex-shrink-0">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-blue-400 font-semibold">Pitanje {wizardStep + 1} od {wizardQuestions.length}</span>
                 <span className="text-slate-400">{Math.round(((wizardStep + 1) / wizardQuestions.length) * 100)}%</span>
@@ -280,7 +352,7 @@ Sada možeš da tražiš poslove! 🚀`,
             </div>
           )}
 
-          {/* Messages Container */}
+          {/* Messages Container - Flexible */}
           <div className="flex-1 overflow-y-auto space-y-4 min-h-0 pr-2">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} wizard-message`}>
@@ -304,7 +376,7 @@ Sada možeš da tražiš poslove! 🚀`,
                     <span className="w-2 h-2 rounded-full bg-blue-400 pulse-loading" style={{ animationDelay: '0.3s' }}></span>
                     <span className="w-2 h-2 rounded-full bg-blue-400 pulse-loading" style={{ animationDelay: '0.6s' }}></span>
                   </span>
-                  <span className="text-sm">AI razmišlja...</span>
+                  <span className="text-sm">AI razmislja...</span>
                 </div>
               </div>
             )}
@@ -313,7 +385,7 @@ Sada možeš da tražiš poslove! 🚀`,
               <div className="flex justify-start wizard-message">
                 <div className="bg-slate-800/80 border border-slate-700/50 text-slate-200 px-5 py-3 rounded-2xl rounded-bl-none flex items-center gap-3">
                   <Loader className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Čuvam tvoj profil...</span>
+                  <span className="text-sm">Cuva se tvoj profil...</span>
                 </div>
               </div>
             )}
@@ -321,27 +393,27 @@ Sada možeš da tražiš poslove! 🚀`,
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Form */}
-          <form onSubmit={handleSendMessage} className="space-y-3 border-t border-slate-700/50 pt-4">
+          {/* Input Form - Always Visible and Sticky */}
+          <form onSubmit={handleSendMessage} className="space-y-3 border-t border-slate-700/50 pt-4 flex-shrink-0">
             <div className="flex gap-3">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={loading || isCompleting || wizardStep >= wizardQuestions.length}
-                placeholder={wizardStep < wizardQuestions.length ? "Napiši svoj odgovor..." : "Wizard završen..."}
+                placeholder={wizardStep < wizardQuestions.length ? "Napisi svoj odgovor..." : "Wizard zavrsen..."}
                 className="flex-1 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none disabled:opacity-50 transition-all"
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={loading || isCompleting || !input.trim()}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 flex-shrink-0"
               >
                 {isCompleting ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    Čuvam...
+                    Cuva...
                   </>
                 ) : (
                   <>
