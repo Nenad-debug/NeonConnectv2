@@ -1,6 +1,6 @@
-// Netlify Serverless Function for Google Gemini API
+// Netlify Serverless Function for AI Chat
 
-exports.handler = async (event: any) => {
+export const handler = async (event: any) => {
   console.log('📨 AI Function invoked')
   console.log('Method:', event.httpMethod)
   
