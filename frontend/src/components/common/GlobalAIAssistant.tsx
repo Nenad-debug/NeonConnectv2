@@ -22,12 +22,12 @@ export default function GlobalAIAssistant() {
         // Get user's name from profile
         const { data: profile } = await supabase
           .from('candidate_profiles')
-          .select('full_name')
+          .select('first_name')
           .eq('user_id', user.id)
           .single()
         
-        if (profile?.full_name) {
-          setUserName(profile.full_name.split(' ')[0]) // First name only
+        if (profile?.first_name) {
+          setUserName(profile.first_name) // First name only
         }
       }
     }

@@ -81,7 +81,7 @@ Mogu ti pomoći sa:
   const wizardQuestions = [
     {
       title: 'Kako se zoveš?',
-      field: 'full_name',
+      field: 'first_name',
       placeholder: 'Unesi svoje puno ime',
       type: 'text',
     },
@@ -183,7 +183,7 @@ Mogu ti pomoći sa:
         const { error } = await supabase
           .from('candidate_profiles')
           .update({
-            full_name: newProfileData.full_name,
+            first_name: newProfileData.first_name,
             current_position: newProfileData.current_position,
             years_experience: newProfileData.years_experience,
             skills: newProfileData.skills,
@@ -201,7 +201,7 @@ Mogu ti pomoći sa:
           updated[updated.length - 1].content = `✅ Odličan posao! Tvoj profil je sačuvan. 
 
 Evo šta sam spreo/sprela:
-📝 Ime: ${newProfileData.full_name}
+📝 Ime: ${newProfileData.first_name}
 💼 Pozicija: ${newProfileData.current_position}
 ⏱️ Iskustvo: ${newProfileData.years_experience}
 🛠️ Vještine: ${newProfileData.skills}
