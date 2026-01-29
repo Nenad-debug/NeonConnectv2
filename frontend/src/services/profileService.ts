@@ -63,6 +63,7 @@ export const profileService = {
   ): Promise<any> {
     try {
       console.log(`📝 [PROFILE SERVICE] Saving candidate profile for user ${userId}`)
+      console.log(`📝 [PROFILE SERVICE] Profile data:`, profile)
 
       // Upload image if provided
       let profileImageUrl = null
@@ -71,18 +72,21 @@ export const profileService = {
       }
 
       // Check if profile exists
+      console.log(`🔍 [PROFILE SERVICE] Checking if profile exists for user ${userId}`)
       const { data: existingProfile, error: fetchError } = await supabase
         .from('candidate_profiles')
         .select('id')
         .eq('user_id', userId)
         .single()
 
+      console.log(`🔍 [PROFILE SERVICE] Fetch result - existing:`, existingProfile, 'error:', fetchError?.code)
+
       if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error(`❌ [PROFILE SERVICE] Fetch error:`, fetchError)
         throw fetchError
       }
 
-      const profileData = {
-        user_id: userId,
+      const profileDataToSave = {
         first_name: profile.firstName,
         last_name: profile.lastName,
         bio: profile.bio,
@@ -105,33 +109,44 @@ export const profileService = {
 
       if (existingProfile) {
         // Update existing profile
+        console.log(`📝 [PROFILE SERVICE] Updating existing profile`)
         const { data, error } = await supabase
           .from('candidate_profiles')
-          .update(profileData)
+          .update(profileDataToSave)
           .eq('user_id', userId)
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error(`❌ [PROFILE SERVICE] Update error:`, error)
+          throw error
+        }
         result = data
         console.log(`✅ [PROFILE SERVICE] Profile updated successfully`)
       } else {
         // Create new profile
+        console.log(`📝 [PROFILE SERVICE] Creating new profile`)
         const { data, error } = await supabase
           .from('candidate_profiles')
-          .insert([profileData])
+          .insert([{
+            user_id: userId,
+            ...profileDataToSave,
+          }])
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error(`❌ [PROFILE SERVICE] Insert error:`, error)
+          throw error
+        }
         result = data
         console.log(`✅ [PROFILE SERVICE] Profile created successfully`)
       }
 
       return result
     } catch (err: any) {
-      console.error('❌ [PROFILE SERVICE] Failed to save profile:', err)
-      throw new Error(`Failed to save profile: ${err.message}`)
+      console.error(`❌ [PROFILE SERVICE] Error saving profile:`, err)
+      throw err
     }
   },
 
