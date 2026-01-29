@@ -18,23 +18,23 @@ export default function SuccessAnimation({ isVisible, onComplete, userName }: Su
 
     console.log('🎨 [SUCCESS ANIMATION] Starting animation...')
 
-    // Stage 1: Show initial success
+    // Stage 1: Show initial success with scale-in
     const timer1 = setTimeout(() => {
       console.log('✨ [SUCCESS ANIMATION] Stage 1 - Confetti')
       setStage('confetti')
-    }, 600)
+    }, 800)
 
-    // Stage 2: Show complete state and trigger callback
+    // Stage 2: Show complete state after confetti has fallen
     const timer2 = setTimeout(() => {
       console.log('🎉 [SUCCESS ANIMATION] Stage 2 - Complete')
       setStage('complete')
-    }, 3500)
+    }, 3800)
 
-    // Stage 3: Call onComplete after animation finishes
+    // Stage 3: Call onComplete after all animations finish
     const timer3 = setTimeout(() => {
       console.log('🚀 [SUCCESS ANIMATION] Triggering onComplete callback')
       onComplete()
-    }, 6500)
+    }, 4500)
 
     return () => {
       clearTimeout(timer1)
