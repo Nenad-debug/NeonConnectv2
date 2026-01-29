@@ -26,13 +26,35 @@ export const authService = {
 
     // If a session was returned, the user is signed in and we can create the profile now
     if (data.user && data.session) {
-      // Upsert to avoid 409 when row already exists (e.g. trigger or double submit)
-      const { error: profileError } = await supabase
+      // Check if user row exists first, then upsert only if needed
+      const { data: existingUser } = await supabase
         .from('users')
-        .upsert([{ id: data.user.id, email, role }], { onConflict: 'id' })
-        .select()
+        .select('id')
+        .eq('id', data.user.id)
+        .maybeSingle()
 
-      if (profileError) throw profileError
+      if (!existingUser) {
+        // Insert new user row
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([{ id: data.user.id, email, role }])
+          .select()
+          .single()
+
+        if (profileError) {
+          // If insert fails with 409, try upsert as fallback
+          if (profileError.code === '23505' || profileError.message?.includes('duplicate')) {
+            const { error: upsertError } = await supabase
+              .from('users')
+              .upsert([{ id: data.user.id, email, role }], { onConflict: 'id' })
+              .select()
+              .single()
+            if (upsertError) throw upsertError
+          } else {
+            throw profileError
+          }
+        }
+      }
 
       // Save to session manager (ENCRYPTED)
       await sessionManager.saveAccount(data.user.id, email, role)
@@ -209,23 +231,79 @@ export const authService = {
         }
       }
 
-      // Use upsert with onConflict to make this idempotent and avoid 409 errors when concurrent
-      await supabase.from('users').upsert([{ id: user.id, email: user.email, role }], { onConflict: 'id' }).select()
+      // Check if user row exists first, then insert/update only if needed
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
 
-      // If candidate, also create candidate_profiles record (upsert avoids 409 if already exists)
-      if (role === 'candidate') {
-        const { error: cpError } = await supabase
-          .from('candidate_profiles')
-          .upsert([{
-            user_id: user.id,
-            first_name: '',
-            last_name: '',
-            profile_complete: false,
-          }], { onConflict: 'user_id' })
+      if (!existingUser) {
+        // Insert new user row
+        const { error: userError } = await supabase
+          .from('users')
+          .insert([{ id: user.id, email: user.email, role }])
           .select()
-        if (cpError) {
-          // Log but don't block sign-in (e.g. RLS or duplicate)
-          console.warn('Candidate profile create/upsert:', cpError.message)
+          .single()
+
+        if (userError) {
+          // If insert fails with duplicate key, try upsert
+          if (userError.code === '23505' || userError.message?.includes('duplicate')) {
+            const { error: upsertError } = await supabase
+              .from('users')
+              .upsert([{ id: user.id, email: user.email, role }], { onConflict: 'id' })
+              .select()
+              .single()
+            if (upsertError) {
+              console.warn('User upsert failed:', upsertError.message)
+            }
+          } else {
+            console.warn('User insert failed:', userError.message)
+          }
+        }
+      }
+
+      // If candidate, also create candidate_profiles record (check first, then insert)
+      if (role === 'candidate') {
+        const { data: existingProfile } = await supabase
+          .from('candidate_profiles')
+          .select('user_id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (!existingProfile) {
+          const { error: cpError } = await supabase
+            .from('candidate_profiles')
+            .insert([{
+              user_id: user.id,
+              first_name: '',
+              last_name: '',
+              profile_complete: false,
+            }])
+            .select()
+            .single()
+
+          if (cpError) {
+            // If insert fails with duplicate, try upsert
+            if (cpError.code === '23505' || cpError.message?.includes('duplicate')) {
+              const { error: upsertError } = await supabase
+                .from('candidate_profiles')
+                .upsert([{
+                  user_id: user.id,
+                  first_name: '',
+                  last_name: '',
+                  profile_complete: false,
+                }], { onConflict: 'user_id' })
+                .select()
+                .single()
+              if (upsertError) {
+                console.warn('Candidate profile upsert failed:', upsertError.message)
+              }
+            } else {
+              // Log but don't block sign-in (e.g. RLS)
+              console.warn('Candidate profile insert failed:', cpError.message)
+            }
+          }
         }
       }
     }
