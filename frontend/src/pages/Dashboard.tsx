@@ -9,8 +9,6 @@ import RecommendedJobs from '../components/candidate/RecommendedJobs'
 import ProfileQuickView from '../components/candidate/ProfileQuickView'
 import Notifications from '../components/candidate/Notifications'
 import ProfileSetup from '../components/candidate/ProfileSetup'
-import SuccessAnimation from '../components/common/SuccessAnimation'
-import AIGuidedTour from '../components/common/AIGuidedTour'
 import { TrendingUp, Briefcase, Heart, Sparkles, LogOut } from 'lucide-react'
 
 export default function Dashboard() {
@@ -18,8 +16,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
   const [showProfileSetup, setShowProfileSetup] = useState(false)
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  const [showAITour, setShowAITour] = useState(false)
   const navigate = useNavigate()
 
   // Mock data - kasnije iz baze
@@ -150,36 +146,6 @@ export default function Dashboard() {
     }
   }
 
-  const handleProfileSetupComplete = async (profileData: any) => {
-    if (!user) return
-
-    try {
-      console.log('💾 [DASHBOARD] Saving profile setup...')
-      
-      await profileService.saveCandidateProfile(user.id, profileData)
-      
-      // Show success animation first, then start tour
-      setShowProfileSetup(false)
-      setShowSuccessAnimation(true)
-      
-      console.log('✅ [DASHBOARD] Profile setup completed')
-    } catch (err: any) {
-      console.error('❌ [DASHBOARD] Profile setup error:', err)
-      throw new Error(err.message || 'Greška pri čuvanju profila')
-    }
-  }
-
-  const handleSuccessAnimationComplete = () => {
-    setShowSuccessAnimation(false)
-    // Start the AI guided tour after success animation
-    setShowAITour(true)
-  }
-
-  const handleAITourComplete = () => {
-    setShowAITour(false)
-    console.log('✅ [DASHBOARD] AI tour completed')
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
@@ -197,25 +163,10 @@ export default function Dashboard() {
     <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8">
       <Background />
 
-      {/* Success Animation - Prikazati na kraju Profile Setup */}
-      <SuccessAnimation
-        isVisible={showSuccessAnimation}
-        onComplete={handleSuccessAnimationComplete}
-        userName={user?.user_metadata?.full_name?.split(' ')[0]}
-      />
-
-      {/* AI Guided Tour */}
-      <AIGuidedTour
-        isActive={showAITour}
-        userName={user?.user_metadata?.full_name?.split(' ')[0]}
-        onComplete={handleAITourComplete}
-      />
-
       {/* Profile Setup Modal */}
       <ProfileSetup
         isOpen={showProfileSetup}
         user={user}
-        onComplete={handleProfileSetupComplete}
       />
 
       <div className="relative max-w-7xl mx-auto px-4 space-y-8">
