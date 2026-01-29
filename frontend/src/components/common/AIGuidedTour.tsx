@@ -144,10 +144,6 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   const tourRef = useRef<HTMLDivElement>(null)
   const tourSteps = getTourSteps(userName)
 
-  if (!isActive) {
-    return null
-  }
-
   const updateHighlightPosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect()
     setHighlightPosition({

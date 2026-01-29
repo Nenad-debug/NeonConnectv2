@@ -79,9 +79,13 @@ export const aiService = {
           console.error('❌ Function error:', data)
 
           // Handle specific status codes
+          if (response.status === 403) {
+            return 'AI chat nije dostupan (zabranjen pristup). Proverite da li je Netlify funkcija deploy-ovana i da li aplikacija radi na istom domenu.'
+          }
           if (response.status === 429) {
             return 'AI servis je trenutno preplavljeno zahtevima. Pokušajte za nekoliko sekundi.'
-          } else if (response.status === 503) {
+          }
+          if (response.status === 503) {
             return 'AI servis je privremeno nedostupan. Pokušajte za nekoliko sekundi.'
           }
 

@@ -3,6 +3,17 @@ import { Sparkles, Loader, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../../services/supabaseClient'
 import { convertCyrillicToLatin } from '../../utils/cyrillic'
 
+const WIZARD_QUESTIONS = [
+  { title: 'Kako se zoveš?', fields: ['first_name'], placeholder: 'Unesi svoje puno ime', instruction: 'Iz odgovora izvuci samo ime i prezime.' },
+  { title: 'Koja je tvoja trenutna pozicija/zanimanje?', fields: ['current_position'], placeholder: 'npr. Frontend Developer, UI/UX Designer', instruction: 'Iz odgovora izvuci samo poziciju.' },
+  { title: 'Koliko godina iskustva imas?', fields: ['years_experience'], placeholder: 'npr. 5 godina', instruction: 'Iz odgovora izvuci samo broj godina.' },
+  { title: 'Naprati kratku biografiju (ko si i sta volis da radis)', fields: ['bio'], placeholder: 'npr. Ja sam frontend developer sa 3 godine iskustva...', instruction: 'Iz odgovora izvuci biografiju (150-250 reci).' },
+  { title: 'Koje su tvoje kljucne vestine?', fields: ['skills'], placeholder: 'npr. React, TypeScript, Node.js, PostgreSQL', instruction: 'Iz odgovora izvuci vestine kao niz (odvojene zarezima). Spremi kao JSON array: ["skill1", "skill2"]' },
+  { title: 'Koje je tvoje najmanje obrazovanje?', fields: ['education'], placeholder: 'npr. Fakultet za informatiku', instruction: 'Iz odgovora izvuci samo naziv obrazovanja.' },
+  { title: 'U kojoj lokaciji trazis posao?', fields: ['location'], placeholder: 'npr. Beograd, Srbija', instruction: 'Iz odgovora izvuci samo lokaciju.' },
+  { title: 'Koja je tvoja ocekivana plata (mesecno)?', fields: ['expected_salary'], placeholder: 'npr. 1500 EUR', instruction: 'Iz odgovora izvuci samo broj i valutu.' },
+]
+
 interface ProfileSetupProps {
   onComplete: (profileData: any) => Promise<void>
   isOpen: boolean
@@ -18,76 +29,6 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
   const [profileData, setProfileData] = useState<Record<string, any>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    console.log('📱 [PROFILE SETUP] isOpen changed:', isOpen)
-  }, [isOpen])
-
-  if (!isOpen || !user) {
-    console.log('🚫 [PROFILE SETUP] Not rendering - isOpen:', isOpen, 'user:', user)
-    return null
-  }
-
-  const wizardQuestions = [
-    {
-      title: 'Kako se zoveš?',
-      fields: ['first_name'],
-      placeholder: 'Unesi svoje puno ime',
-      instruction: 'Iz odgovora izvuci samo ime i prezime.',
-    },
-    {
-      title: 'Koja je tvoja trenutna pozicija/zanimanje?',
-      fields: ['current_position'],
-      placeholder: 'npr. Frontend Developer, UI/UX Designer',
-      instruction: 'Iz odgovora izvuci samo poziciju.',
-    },
-    {
-      title: 'Koliko godina iskustva imas?',
-      fields: ['years_experience'],
-      placeholder: 'npr. 5 godina',
-      instruction: 'Iz odgovora izvuci samo broj godina.',
-    },
-    {
-      title: 'Naprati kratku biografiju (ko si i sta volis da radis)',
-      fields: ['bio'],
-      placeholder: 'npr. Ja sam frontend developer sa 3 godine iskustva...',
-      instruction: 'Iz odgovora izvuci biografiju (150-250 reci).',
-    },
-    {
-      title: 'Koje su tvoje kljucne vestine?',
-      fields: ['skills'],
-      placeholder: 'npr. React, TypeScript, Node.js, PostgreSQL',
-      instruction: 'Iz odgovora izvuci vestine kao niz (odvojene zarezima). Spremi kao JSON array: ["skill1", "skill2"]',
-    },
-    {
-      title: 'Koje je tvoje najmanje obrazovanje?',
-      fields: ['education'],
-      placeholder: 'npr. Fakultet za informatiku',
-      instruction: 'Iz odgovora izvuci samo naziv obrazovanja.',
-    },
-    {
-      title: 'U kojoj lokaciji trazis posao?',
-      fields: ['location'],
-      placeholder: 'npr. Beograd, Srbija',
-      instruction: 'Iz odgovora izvuci samo lokaciju.',
-    },
-    {
-      title: 'Koja je tvoja ocekivana plata (mesecno)?',
-      fields: ['expected_salary'],
-      placeholder: 'npr. 1500 EUR',
-      instruction: 'Iz odgovora izvuci samo broj i valutu.',
-    },
-  ]
-
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      initializeWizard()
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -97,15 +38,35 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
 
 Zdravo${user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name.split(' ')[0]}` : ''}! 👋 
 
-${wizardQuestions.length} pitanja i tvoj profil ce biti spreman! Odgovori iskreno i detaljno - koristicese za pronalazenje savrsenih poslova za tebe.
+${WIZARD_QUESTIONS.length} pitanja i tvoj profil ce biti spreman! Odgovori iskreno i detaljno - koristicese za pronalazenje savrsenih poslova za tebe.
 
 **Pocnimo! 🎯**
 
-${wizardQuestions[0].title}`
+${WIZARD_QUESTIONS[0].title}`
 
     setMessages([{ role: 'assistant', content: greeting }])
     setWizardStep(0)
   }
+
+  useEffect(() => {
+    console.log('📱 [PROFILE SETUP] isOpen changed:', isOpen)
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && user && messages.length === 0) {
+      initializeWizard()
+    }
+  }, [isOpen, user])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  if (!isOpen || !user) {
+    return null
+  }
+
+  const wizardQuestions = WIZARD_QUESTIONS
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()

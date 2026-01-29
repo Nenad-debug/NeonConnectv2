@@ -18,6 +18,12 @@ Ovo su koraci i podešavanja za deploy tvoje Vite + React aplikacije na Netlify.
   - **Site URL** postavi na Netlify URL (npr. `https://tvoj-sajt.netlify.app`)
   - **Redirect URLs**: dodaj `http://localhost:3000` (dev) i `https://tvoj-sajt.netlify.app` (prod)
 
+### AI Chat funkcija (403 = zabranjen pristup)
+- U **Site settings → Environment** dodaj i za **Functions**:
+  - `AIML_API_KEY` = tvoj AIML API ključ (za AI chat)
+- Ako AI chat vraća 403: proveri da li je `netlify/functions/ai-chat.ts` deploy-ovan i da li je zahtev šalješ sa **istog domena** (ne sa localhost na prod URL).
+- Lokalno: `netlify dev` pokreće i frontend i funkcije; `npm run dev` (Vite) ne servira funkcije pa `/.netlify/functions/ai-chat` neće raditi.
+
 ## Lokalno: kako deployovati
 1. Dodaj i commituj fajlove:
 ```bash

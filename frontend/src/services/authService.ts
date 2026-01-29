@@ -26,9 +26,11 @@ export const authService = {
 
     // If a session was returned, the user is signed in and we can create the profile now
     if (data.user && data.session) {
+      // Upsert to avoid 409 when row already exists (e.g. trigger or double submit)
       const { error: profileError } = await supabase
         .from('users')
-        .insert([{ id: data.user.id, email, role }])
+        .upsert([{ id: data.user.id, email, role }], { onConflict: 'id' })
+        .select()
 
       if (profileError) throw profileError
 
@@ -210,18 +212,20 @@ export const authService = {
       // Use upsert with onConflict to make this idempotent and avoid 409 errors when concurrent
       await supabase.from('users').upsert([{ id: user.id, email: user.email, role }], { onConflict: 'id' }).select()
 
-      // If candidate, also create candidate_profiles record
+      // If candidate, also create candidate_profiles record (upsert avoids 409 if already exists)
       if (role === 'candidate') {
-        // Try to create candidate profile, but don't fail if it already exists
-        try {
-          await supabase.from('candidate_profiles').insert([{
+        const { error: cpError } = await supabase
+          .from('candidate_profiles')
+          .upsert([{
             user_id: user.id,
             first_name: '',
             last_name: '',
             profile_complete: false,
-          }]).select()
-        } catch (e) {
-          // Ignore if already exists
+          }], { onConflict: 'user_id' })
+          .select()
+        if (cpError) {
+          // Log but don't block sign-in (e.g. RLS or duplicate)
+          console.warn('Candidate profile create/upsert:', cpError.message)
         }
       }
     }
