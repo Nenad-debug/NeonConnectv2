@@ -117,12 +117,16 @@ ${wizardQuestions[0].title}`
         const fields = currentQuestion.fields
 
         // Use AI to extract data from user's answer
-        const extractionPrompt = `Korisnik je odgovorio: "${userMessage}"
-        
-${currentQuestion.instruction}
+        const extractionPrompt = `Pitanje je: "${currentQuestion.title}"
+Korisnik je odgovorio: "${userMessage}"
+
+PRVO VALIDIRANJE:
+- Provjeri da li je odgovor relevantan za pitanje
+- Ako NIJE relevantno (npr. unese nesto sasvim drugacije): Objasni ZASTO to nije odgovor na to pitanje i PONOVI pitanje
+- Ako JESTE relevantno: ${currentQuestion.instruction}
 
 VAZNO: Koristi samo EKAVISKI oblik i LATINICU (ne ćirilicu).
-Vrati SAMO ekstrakovan odgovor bez dodatnog objasnjenja.`
+Ako objasnjavam relevantnost, budi ljubazan ali jasan.`
 
         const response = await fetch('/.netlify/functions/ai-chat', {
           method: 'POST',
@@ -168,31 +172,52 @@ Vrati SAMO ekstrakovan odgovor bez dodatnog objasnjenja.`
           .replace(/ы/g, 'i')
           .replace(/Ы/g, 'I')
 
-        // Save extracted data
-        const newProfileData = {
-          ...profileData,
-          [fields[0]]: aiResponse,
-        }
-        setProfileData(newProfileData)
+        // Check if AI rejected the answer (detected irrelevance) or accepted it
+        // If response contains keywords about rejecting/repeating question, it's a rejection
+        const isRejection = aiResponse.toLowerCase().includes('nije') ||
+                            aiResponse.toLowerCase().includes('ne odgovara') ||
+                            aiResponse.toLowerCase().includes('ponovi') ||
+                            aiResponse.toLowerCase().includes('molim') ||
+                            aiResponse.toLowerCase().includes('odgovor na') ||
+                            aiResponse.toLowerCase().includes('sljedeći')
 
-        // Show confirmation with animation
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            content: `✅ Spreo/la! Tvoj odgovor je: "${aiResponse}"\n\n${
-              wizardStep < wizardQuestions.length - 1
-                ? `Sledece pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
-                : `🎉 Svi podaci su prikupljeni! Cuva se tvoj profil...`
-            }`,
-          },
-        ])
-
-        if (wizardStep < wizardQuestions.length - 1) {
-          setWizardStep(wizardStep + 1)
+        if (isRejection) {
+          // AI rejected the answer, show explanation and stay on same question
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: aiResponse,
+            },
+          ])
+          // Don't advance to next question
         } else {
-          // Save profile to database
-          saveProfile(newProfileData)
+          // AI accepted the answer, save data and move to next question
+          const newProfileData = {
+            ...profileData,
+            [fields[0]]: aiResponse,
+          }
+          setProfileData(newProfileData)
+
+          // Show confirmation with animation
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: `✅ Spreo/la! Tvoj odgovor je: "${aiResponse}"\n\n${
+                wizardStep < wizardQuestions.length - 1
+                  ? `Sledece pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
+                  : `🎉 Svi podaci su prikupljeni! Cuva se tvoj profil...`
+              }`,
+            },
+          ])
+
+          if (wizardStep < wizardQuestions.length - 1) {
+            setWizardStep(wizardStep + 1)
+          } else {
+            // Save profile to database
+            saveProfile(newProfileData)
+          }
         }
       }
     } catch (err) {
