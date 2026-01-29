@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
-import ImageUpload from './ImageUpload'
-import AIChat from './AIChat'
+import { useState, useEffect, useRef } from 'react'
+import { Sparkles, Loader, CheckCircle2 } from 'lucide-react'
+import { supabase } from '../../services/supabaseClient'
 
 interface ProfileSetupProps {
   onComplete: (profileData: any) => Promise<void>
@@ -9,645 +8,350 @@ interface ProfileSetupProps {
   user?: any
 }
 
-interface ProfileFormData {
-  firstName: string
-  lastName: string
-  bio: string
-  phone: string
-  location: string
-  experienceYears: number
-  skills: string[]
-  skillInput: string
-  education: string[]
-  educationInput: string
-  certifications: string[]
-  certificationInput: string
-  languages: string[]
-  languageInput: string
-  website: string
-  githubUrl: string
-  linkedinUrl: string
-  profileImage: File | null
-  profileImagePreview: string | null
-}
-
-const STEPS = [
-  { id: 1, label: 'Osnovne info', icon: '👤' },
-  { id: 2, label: 'Kontakt', icon: '📞' },
-  { id: 3, label: 'Iskustvo', icon: '💼' },
-  { id: 4, label: 'Veštine & Jezici', icon: '🎯' },
-  { id: 5, label: 'Edukacija', icon: '🎓' },
-  { id: 6, label: 'Linkovi & Slika', icon: '🔗' },
-]
-
 export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupProps) {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [wizardStep, setWizardStep] = useState(0)
+  const [messages, setMessages] = useState<any[]>([])
+  const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [formData, setFormData] = useState<ProfileFormData>({
-    firstName: user?.user_metadata?.full_name?.split(' ')[0] || '',
-    lastName: user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-    bio: '',
-    phone: '',
-    location: '',
-    experienceYears: 0,
-    skills: [],
-    skillInput: '',
-    education: [],
-    educationInput: '',
-    certifications: [],
-    certificationInput: '',
-    languages: [],
-    languageInput: '',
-    website: '',
-    githubUrl: '',
-    linkedinUrl: '',
-    profileImage: null,
-    profileImagePreview: null,
-  })
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [profileData, setProfileData] = useState<Record<string, any>>({})
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  if (!isOpen) return null
+  if (!isOpen || !user) return null
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'experienceYears' ? parseInt(value) || 0 : value
-    }))
-  }
+  const wizardQuestions = [
+    {
+      title: 'Kako se zoveš?',
+      fields: ['first_name'],
+      placeholder: 'Unesi svoje puno ime',
+      instruction: 'Iz odgovora izvuci samo ime i prezime.',
+    },
+    {
+      title: 'Naprati kratku biografiju (ko si i šta voliš da radiš)',
+      fields: ['bio'],
+      placeholder: 'npr. Ja sam frontend developer sa 3 godine iskustva...',
+      instruction: 'Iz odgovora izvuci biografiju (100-200 reči).',
+    },
+    {
+      title: 'Navedи svoje ključne vještine (odvojene zarezima)',
+      fields: ['skills'],
+      placeholder: 'npr. React, TypeScript, Node.js, PostgreSQL',
+      instruction: 'Iz odgovora izvuci vještine kao niz (odvojene zarezima). Spremi kao JSON array: ["skill1", "skill2"]',
+    },
+  ]
 
-  const addArrayItem = (field: 'skills' | 'education' | 'certifications' | 'languages') => {
-    const inputField = `${field.slice(0, -1)}Input` as keyof ProfileFormData
-    const inputValue = formData[inputField] as string
-    
-    if (inputValue.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        [field]: [...(prev[field] as string[]), inputValue],
-        [inputField]: ''
-      }))
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      initializeWizard()
     }
+  }, [isOpen])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const removeArrayItem = (field: 'skills' | 'education' | 'certifications' | 'languages', index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: (prev[field] as string[]).filter((_, i) => i !== index)
-    }))
+  const initializeWizard = () => {
+    const greeting = `🚀 Pokrenut AI Profil Wizard!
+
+Zdravo${user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name.split(' ')[0]}` : ''}! 👋 
+
+Samo 3 pitanja i tvoj profil će biti spreman! Odgovori iskreno i detaljno - koristiće se za pronalaženje savršenih poslova za tebe.
+
+**Počnimo! 🎯**
+
+${wizardQuestions[0].title}`
+
+    setMessages([{ role: 'assistant', content: greeting }])
+    setWizardStep(0)
   }
 
-  const handleImageSelected = (file: File, preview: string) => {
-    setFormData(prev => ({
-      ...prev,
-      profileImage: file,
-      profileImagePreview: preview
-    }))
-  }
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || loading) return
 
-  const validateStep = (): boolean => {
-    setError(null)
-    
-    switch (currentStep) {
-      case 1:
-        if (!formData.firstName.trim()) {
-          setError('Ime je obavezno')
-          return false
-        }
-        if (!formData.lastName.trim()) {
-          setError('Prezime je obavezno')
-          return false
-        }
-        if (!formData.bio.trim()) {
-          setError('Bio je obavezan')
-          return false
-        }
-        return true
-      
-      case 2:
-        if (!formData.phone.trim()) {
-          setError('Telefon je obavezan')
-          return false
-        }
-        if (!formData.location.trim()) {
-          setError('Lokacija je obavezna')
-          return false
-        }
-        return true
-      
-      case 6:
-        if (!formData.profileImage) {
-          setError('Profilna slika je obavezna')
-          return false
-        }
-        return true
-      
-      default:
-        return true
-    }
-  }
+    const userMessage = input.trim()
+    setInput('')
 
-  const handleNext = () => {
-    if (validateStep()) {
-      if (currentStep < STEPS.length) {
-        setCurrentStep(currentStep + 1)
-      }
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  const handleSubmit = async () => {
-    if (!validateStep()) return
-
-    setLoading(true)
-    setError(null)
+    // Add user message to chat
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
 
     try {
-      await onComplete({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        bio: formData.bio,
-        phone: formData.phone,
-        location: formData.location,
-        experienceYears: formData.experienceYears,
-        skills: formData.skills,
-        education: formData.education,
-        certifications: formData.certifications,
-        languages: formData.languages,
-        website: formData.website,
-        githubUrl: formData.githubUrl,
-        linkedinUrl: formData.linkedinUrl,
-        profileImage: formData.profileImage,
-      })
-    } catch (err: any) {
-      setError(err.message || 'Greška pri čuvanju profila')
+      setLoading(true)
+
+      if (wizardStep < wizardQuestions.length) {
+        const currentQuestion = wizardQuestions[wizardStep]
+        const fields = currentQuestion.fields
+
+        // Use AI to extract data from user's answer
+        const extractionPrompt = `Korisnik je odgovorio: "${userMessage}"
+        
+${currentQuestion.instruction}
+
+Vrati SAMO ekstrakovan odgovor bez dodatnog objašnjenja.`
+
+        const response = await fetch('/.netlify/functions/ai-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: extractionPrompt,
+            context: 'profile_setup',
+            previousMessages: messages,
+          }),
+        })
+
+        const data = await response.json()
+        const aiResponse = data.response || userMessage
+
+        // Save extracted data
+        const newProfileData = {
+          ...profileData,
+          [fields[0]]: aiResponse,
+        }
+        setProfileData(newProfileData)
+
+        // Show confirmation with animation
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `✅ Spreo/la! Tvoj odgovor je: "${aiResponse}"\n\n${
+              wizardStep < wizardQuestions.length - 1
+                ? `Sledеće pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
+                : `🎉 Svi podaci su prikupljeni! Čuvam tvoj profil...`
+            }`,
+          },
+        ])
+
+        if (wizardStep < wizardQuestions.length - 1) {
+          setWizardStep(wizardStep + 1)
+        } else {
+          // Save profile to database
+          saveProfile(newProfileData)
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: `Greška: ${(err as any).message}` },
+      ])
     } finally {
       setLoading(false)
     }
   }
 
+  const saveProfile = async (data: Record<string, any>) => {
+    try {
+      setIsCompleting(true)
+
+      // Parse skills if needed
+      let skills = data.skills || []
+      if (typeof skills === 'string') {
+        // Try to extract array from string
+        const arrayMatch = skills.match(/\[.*\]/)
+        if (arrayMatch) {
+          skills = JSON.parse(arrayMatch[0])
+        } else {
+          // Split by comma
+          skills = skills.split(',').map((s: string) => s.trim())
+        }
+      }
+
+      // Parse first and last name
+      const nameParts = (data.first_name || '').split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+
+      // Update profile
+      const { error } = await supabase
+        .from('candidate_profiles')
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          bio: data.bio || '',
+          skills: skills,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `🎊 Bravo! Tvoj profil je uspešno sačuvan!
+
+📝 **Sačuvani podaci:**
+👤 Ime: ${firstName} ${lastName}
+📄 Biografija: ${data.bio}
+🛠️ Vještine: ${Array.isArray(skills) ? skills.join(', ') : skills}
+
+Sada možeš da tražiš poslove! 🚀`,
+        },
+      ])
+
+      setTimeout(() => {
+        onComplete({
+          first_name: firstName,
+          last_name: lastName,
+          bio: data.bio,
+          skills: skills,
+        })
+      }, 2000)
+    } catch (err: any) {
+      console.error('Save error:', err)
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Greška pri čuvanju: ${err.message}`,
+        },
+      ])
+    } finally {
+      setIsCompleting(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl max-h-screen overflow-y-auto flex gap-4">
-        {/* Main Form Section */}
-        <div className="flex-1 min-w-0">
-          <div className="relative group h-full">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-100"></div>
-            
-            <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl p-8 space-y-8 h-full">
-            {/* Header */}
-            <div className="space-y-4">
-              <h1 className="text-3xl font-black text-white">Kreiraj svoj profil</h1>
-              <p className="text-slate-300">
-                Dopuni sve informacije da bi domaćini videli ko si i šta tražiš
-              </p>
-            </div>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <style>{`
+        @keyframes slide-up-wizard {
+          from { transform: translateY(30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes message-slide {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .wizard-modal {
+          animation: slide-up-wizard 0.4s ease-out;
+        }
+        .wizard-message {
+          animation: message-slide 0.3s ease-out;
+        }
+        @keyframes pulse-dots {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .pulse-loading {
+          animation: pulse-dots 1.4s ease-in-out infinite;
+        }
+      `}</style>
 
-            {/* Progress indicator */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                {STEPS.map((step, idx) => (
-                  <div key={step.id} className="flex items-center gap-2 flex-1">
-                    <button
-                      onClick={() => idx < currentStep && setCurrentStep(step.id)}
-                      className={`w-10 h-10 rounded-full font-bold flex items-center justify-center transition-all ${
-                        step.id <= currentStep
-                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
-                          : 'bg-slate-800 text-slate-500'
-                      }`}
-                    >
-                      {step.id < currentStep ? <CheckCircle2 className="w-5 h-5" /> : step.id}
-                    </button>
-                    
-                    {idx < STEPS.length - 1 && (
-                      <div className={`flex-1 h-1 rounded-full transition-all ${
-                        step.id < currentStep
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600'
-                          : 'bg-slate-800'
-                      }`}></div>
-                    )}
-                  </div>
-                ))}
+      <div className="w-full max-w-2xl max-h-[90vh] flex flex-col wizard-modal">
+        {/* Gradient Border */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-lg opacity-75"></div>
+
+        {/* Modal Content */}
+        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900/95 rounded-3xl p-8 space-y-6 flex flex-col h-full border border-blue-500/30 shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
+                <Sparkles className="w-6 h-6 text-white" />
               </div>
-              
-              <p className="text-sm text-slate-400 text-center">
-                Korak {currentStep} od {STEPS.length}: {STEPS[currentStep - 1].label}
-              </p>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Profil Wizard
+                </h2>
+                <p className="text-xs text-slate-400">AI će te vodit kroz postavljanje profila</p>
+              </div>
             </div>
+          </div>
 
-            {/* Error message */}
-            {error && (
-              <div className="p-4 rounded-lg bg-red-500/20 border border-red-500/50 flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                <p className="text-red-300">{error}</p>
+          {/* Progress Bar */}
+          {wizardStep < wizardQuestions.length && !isCompleting && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-blue-400 font-semibold">Pitanje {wizardStep + 1} od {wizardQuestions.length}</span>
+                <span className="text-slate-400">{Math.round(((wizardStep + 1) / wizardQuestions.length) * 100)}%</span>
+              </div>
+              <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                  style={{ width: `${((wizardStep + 1) / wizardQuestions.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Messages Container */}
+          <div className="flex-1 overflow-y-auto space-y-4 min-h-0 pr-2">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} wizard-message`}>
+                <div
+                  className={`max-w-sm px-5 py-3 rounded-2xl ${
+                    msg.role === 'user'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-none'
+                      : 'bg-slate-800/80 text-slate-100 rounded-bl-none border border-slate-700/50'
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start wizard-message">
+                <div className="bg-slate-800/80 border border-slate-700/50 text-slate-200 px-5 py-3 rounded-2xl rounded-bl-none flex items-center gap-3">
+                  <span className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 pulse-loading" style={{ animationDelay: '0s' }}></span>
+                    <span className="w-2 h-2 rounded-full bg-blue-400 pulse-loading" style={{ animationDelay: '0.3s' }}></span>
+                    <span className="w-2 h-2 rounded-full bg-blue-400 pulse-loading" style={{ animationDelay: '0.6s' }}></span>
+                  </span>
+                  <span className="text-sm">AI razmišlja...</span>
+                </div>
               </div>
             )}
 
-            {/* Form content */}
-            <div className="space-y-6 min-h-96">
-              {/* Step 1: Basic Info */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Ime <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      placeholder="Tvoje ime"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Prezime <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      placeholder="Tvoje prezime"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Kratka biografija <span className="text-red-400">*</span>
-                    </label>
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      placeholder="Napiši nešto o sebi, šta tražiš, tvoje ambicije..."
-                      rows={5}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all resize-none"
-                    />
-                    <p className="text-xs text-slate-500 mt-2">Preporuka: 100-200 karaktera</p>
-                  </div>
+            {isCompleting && (
+              <div className="flex justify-start wizard-message">
+                <div className="bg-slate-800/80 border border-slate-700/50 text-slate-200 px-5 py-3 rounded-2xl rounded-bl-none flex items-center gap-3">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Čuvam tvoj profil...</span>
                 </div>
-              )}
-
-              {/* Step 2: Contact */}
-              {currentStep === 2 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Telefon <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="+381 60 123 4567"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Lokacija <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      placeholder="Beograd, Srbija"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Experience */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Godina iskustva
-                    </label>
-                    <select
-                      name="experienceYears"
-                      value={formData.experienceYears}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white focus:border-blue-500 focus:outline-none transition-all"
-                    >
-                      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map(year => (
-                        <option key={year} value={year}>
-                          {year === 0 ? 'Početnik' : `${year}+ godina`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Skills & Languages */}
-              {currentStep === 4 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Veštine
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        name="skillInput"
-                        value={formData.skillInput}
-                        onChange={handleInputChange}
-                        placeholder="React, TypeScript, Node.js..."
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            addArrayItem('skills')
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                      />
-                      <button
-                        onClick={() => addArrayItem('skills')}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all"
-                      >
-                        Dodaj
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.skills.map((skill, idx) => (
-                        <div
-                          key={idx}
-                          className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/50 text-sm flex items-center gap-2"
-                        >
-                          {skill}
-                          <button
-                            onClick={() => removeArrayItem('skills', idx)}
-                            className="text-blue-300 hover:text-red-400 transition-colors"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Jezici
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        name="languageInput"
-                        value={formData.languageInput}
-                        onChange={handleInputChange}
-                        placeholder="Srpski, Engleski, Nemački..."
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            addArrayItem('languages')
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                      />
-                      <button
-                        onClick={() => addArrayItem('languages')}
-                        className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-all"
-                      >
-                        Dodaj
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.languages.map((lang, idx) => (
-                        <div
-                          key={idx}
-                          className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 text-sm flex items-center gap-2"
-                        >
-                          {lang}
-                          <button
-                            onClick={() => removeArrayItem('languages', idx)}
-                            className="text-emerald-300 hover:text-red-400 transition-colors"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Education */}
-              {currentStep === 5 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Obrazovanje
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        name="educationInput"
-                        value={formData.educationInput}
-                        onChange={handleInputChange}
-                        placeholder="Računarski fakultet - Beograd"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            addArrayItem('education')
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                      />
-                      <button
-                        onClick={() => addArrayItem('education')}
-                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-all"
-                      >
-                        Dodaj
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {formData.education.map((edu, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3 rounded-lg bg-slate-800/50 border border-purple-500/50 flex items-center justify-between"
-                        >
-                          <p className="text-white text-sm">{edu}</p>
-                          <button
-                            onClick={() => removeArrayItem('education', idx)}
-                            className="text-slate-400 hover:text-red-400 transition-colors"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Sertifikati
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        name="certificationInput"
-                        value={formData.certificationInput}
-                        onChange={handleInputChange}
-                        placeholder="AWS Solutions Architect"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            addArrayItem('certifications')
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                      />
-                      <button
-                        onClick={() => addArrayItem('certifications')}
-                        className="px-4 py-2 rounded-lg bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition-all"
-                      >
-                        Dodaj
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {formData.certifications.map((cert, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3 rounded-lg bg-slate-800/50 border border-yellow-500/50 flex items-center justify-between"
-                        >
-                          <p className="text-white text-sm">{cert}</p>
-                          <button
-                            onClick={() => removeArrayItem('certifications', idx)}
-                            className="text-slate-400 hover:text-red-400 transition-colors"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 6: Links & Image */}
-              {currentStep === 6 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Lični veb sajt (opciono)
-                    </label>
-                    <input
-                      type="url"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleInputChange}
-                      placeholder="https://tvoj-sajt.com"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      GitHub profil (opciono)
-                    </label>
-                    <input
-                      type="url"
-                      name="githubUrl"
-                      value={formData.githubUrl}
-                      onChange={handleInputChange}
-                      placeholder="https://github.com/korisnicko-ime"
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      LinkedIn profil (opciono)
-                    </label>
-                    <input
-                      type="url"
-                      name="linkedinUrl"
-                      value={formData.linkedinUrl}
-                      onChange={handleInputChange}
-                      placeholder="https://linkedin.com/in/..."
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-all"
-                    />
-                  </div>
-
-                  <ImageUpload 
-                    onImageSelected={handleImageSelected}
-                    currentImage={formData.profileImagePreview || undefined}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Navigation buttons */}
-            <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-700/50">
-              <button
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                className="px-6 py-3 rounded-lg border border-slate-700/50 text-white hover:bg-slate-800/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 font-semibold"
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Nazad
-              </button>
-
-              {currentStep === STEPS.length ? (
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-8 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                >
-                  {loading ? 'Čuvam...' : 'Završi'}
-                  <CheckCircle2 className="w-5 h-5" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all flex items-center gap-2"
-                >
-                  Dalje
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-            </div>
-          </div>
-        </div>
-
-        {/* AI Assistant Section */}
-        <div className="hidden lg:flex w-80 flex-shrink-0">
-          <div className="relative group w-full">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-100"></div>
-            
-            <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl p-4 h-full flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  AI Asistent
-                </h3>
               </div>
-              
-              {user && (
-                <AIChat 
-                  userId={user.id}
-                  context="profile_setup"
-                  compact={true}
-                />
-              )}
-            </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
+
+          {/* Input Form */}
+          <form onSubmit={handleSendMessage} className="space-y-3 border-t border-slate-700/50 pt-4">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={loading || isCompleting || wizardStep >= wizardQuestions.length}
+                placeholder={wizardStep < wizardQuestions.length ? "Napiši svoj odgovor..." : "Wizard završen..."}
+                className="flex-1 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none disabled:opacity-50 transition-all"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={loading || isCompleting || !input.trim()}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              >
+                {isCompleting ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Čuvam...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Dalje
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
