@@ -295,8 +295,8 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* ===== TABS ===== */}
-        <div className="flex gap-4 border-b border-slate-700/50">
+        {/* ===== TABS (tour: filtriranje / pregled sekcija) ===== */}
+        <div className="flex gap-4 border-b border-slate-700/50" data-tour-filter>
           {[
             { id: 'overview', label: '📊 Pregled' },
             { id: 'applications', label: '📤 Moje aplikacije' },

@@ -71,13 +71,14 @@ Klikni "Primeni" dugme i tvoj profil će biti automatski poslat kompaniji.
     title: '🔍 Filtriranje i Pretraga',
     description: `Trebaju ti specifični poslovi?
 
-Koristi filter opcije:
+Koristi filter opcije na stranici "Poslovi":
 - 📍 Po lokaciji
 - 💰 Po plati
 - 🏢 Po tipu (full-time, freelance, itd.)
 - 🏷️ Po kategoriji
 
-Kombinuj filtere za preciznu pretragu.`,
+Tabovi ovde (Pregled / Aplikacije / Sačuvano) i dugme "Pretraži poslove" vode ka pretrazi.`,
+    target: '[data-tour-filter]',
     position: 'bottom',
   },
   {
@@ -107,16 +108,16 @@ Ovde ćeš videti:
   },
   {
     id: 'ai-chat',
-    title: '🤖 AI Asistent (Ja!)',
-    description: `Vidim dugme sa spark ikonom dolje desno? To sam ja! 😊
+    title: '🤖 AI Asistent',
+    description: `Dugme dolje desno (sa ✨ ikonom) je AI asistent – otvara chat gde možeš da pitaš bilo šta o platformi, poslovima, profilu ili prijavi.
 
-Klikni na mene bilo kada da:
-❓ Postaviš pitanja o platformi
-💡 Dobiješ savete za pretragu
-📝 Pomognem sa cover letter-om
-🎯 Vodim te kroz sve što trebaš
+Šta može:
+❓ Odgovori na pitanja o NeonConnect-u
+💡 Saveti za pretragu i prijavu
+📝 Pomoć oko biografije i cover letter-a
+🎯 Vodim te kroz korake
 
-Slobodno mi se javi sa bilo čim!`,
+Klikni na njega kad god ti zatreba pomoć.`,
     target: '[data-tour-ai]',
     position: 'left',
   },
@@ -287,47 +288,41 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
         }
       `}</style>
 
-      {/* Dark overlay - z below highlight so highlight stays visible */}
-      <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm" aria-hidden="true"></div>
-
-      {/* Highlight element - above overlay */}
-      {highlightPosition && (
+      {/* Overlay: full screen when no highlight; 4 strips (frame) when highlight so that area stays UNBLURRED */}
+      {highlightPosition ? (
         <>
-          <div
-            className="tour-highlight"
-            style={{
-              top: highlightPosition.top,
-              left: highlightPosition.left,
-              width: highlightPosition.width,
-              height: highlightPosition.height,
-            }}
-          ></div>
-
-          {/* Clear overlay for highlighted element */}
-          <div
-            className="fixed pointer-events-none"
-            style={{
-              top: highlightPosition.top,
-              left: highlightPosition.left,
-              width: highlightPosition.width,
-              height: highlightPosition.height,
-              backgroundColor: 'transparent',
-              zIndex: 105,
-            }}
-          ></div>
+          <div className="fixed left-0 top-0 right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ height: Math.max(0, highlightPosition.top) }} aria-hidden="true" />
+          <div className="fixed left-0 right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top, left: 0, width: highlightPosition.left, height: highlightPosition.height }} aria-hidden="true" />
+          <div className="fixed right-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top, left: highlightPosition.left + highlightPosition.width, right: 0, height: highlightPosition.height }} aria-hidden="true" />
+          <div className="fixed left-0 right-0 bottom-0 z-[100] bg-black/70 backdrop-blur-sm" style={{ top: highlightPosition.top + highlightPosition.height }} aria-hidden="true" />
         </>
+      ) : (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm" aria-hidden="true" />
       )}
 
-      {/* Tour card - above overlay and highlight */}
+      {/* Highlight border around unblurred area */}
+      {highlightPosition && (
+        <div
+          className="tour-highlight"
+          style={{
+            top: highlightPosition.top,
+            left: highlightPosition.left,
+            width: highlightPosition.width,
+            height: highlightPosition.height,
+          }}
+        />
+      )}
+
+      {/* Tour card - always at bottom of viewport so no scrolling needed */}
       <div
         ref={tourRef}
         className="tour-card fixed z-[110] w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 shadow-2xl p-8"
         style={{
           left: '50%',
           transform: 'translateX(-50%)',
-          bottom: highlightPosition ? undefined : 60,
-          top: highlightPosition ? Math.max(24, highlightPosition.top + highlightPosition.height + 24) : undefined,
-          maxHeight: '90vh',
+          bottom: 24,
+          top: 'auto',
+          maxHeight: '50vh',
           overflowY: 'auto',
         }}
       >
