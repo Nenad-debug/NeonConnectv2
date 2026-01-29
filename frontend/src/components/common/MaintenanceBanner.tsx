@@ -100,15 +100,18 @@ export default function MaintenanceBanner() {
           aria-hidden="true"
         />
 
-        {/* Modal */}
+        {/* Modal — content in flow so modal has height; shine as background layer */}
         <div
-          className={`maintenance-modal-enter relative w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl transition-all duration-300 ${
+          className={`maintenance-modal-enter relative z-10 w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl transition-all duration-300 ${
             isEntered ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          {/* Shine border effect + content inside so border is visible */}
-          <div className="maintenance-shine-border absolute inset-0 rounded-2xl p-[1px]">
-            <div className="absolute inset-[1px] rounded-[14px] bg-gradient-to-b from-slate-900 to-slate-900/98 border border-slate-700/50 overflow-hidden">
+          {/* Shine border (decorative, behind content) */}
+          <div className="maintenance-shine-border absolute inset-0 rounded-2xl p-[1px] z-0" aria-hidden="true">
+            <div className="absolute inset-[1px] rounded-[14px] bg-slate-900/95" />
+          </div>
+          {/* Content in flow so modal gets height and is visible */}
+          <div className="relative z-10 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-900/98 border border-slate-700/50 overflow-hidden">
             {/* Header */}
             <div className="relative px-6 pt-6 pb-4">
               <div className="flex items-start justify-between gap-4">
@@ -208,7 +211,7 @@ export default function MaintenanceBanner() {
                 U redu
               </button>
             </div>
-            </div>
+          </div>
           </div>
         </div>
       </div>
