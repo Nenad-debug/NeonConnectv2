@@ -172,9 +172,16 @@ export default function Dashboard() {
       
       console.log('📝 [DASHBOARD] Converted data:', convertedData)
       
-      await profileService.saveCandidateProfile(user.id, convertedData)
+      // Try to save full profile, but don't fail if it errors (already saved in ProfileSetup)
+      try {
+        await profileService.saveCandidateProfile(user.id, convertedData)
+        console.log('✅ [DASHBOARD] Profile service save succeeded')
+      } catch (serviceErr) {
+        console.error('⚠️ [DASHBOARD] Profile service save failed (already saved in ProfileSetup):', serviceErr)
+        // Don't throw - profile was already saved in ProfileSetup
+      }
       
-      // Show success animation first, then start tour
+      // Close modal and show animation
       console.log('🎬 [DASHBOARD] Setting showProfileSetup to false')
       setShowProfileSetup(false)
       console.log('🎬 [DASHBOARD] Setting showSuccessAnimation to true')
@@ -183,7 +190,7 @@ export default function Dashboard() {
       console.log('✅ [DASHBOARD] Profile setup completed')
     } catch (err: any) {
       console.error('❌ [DASHBOARD] Profile setup error:', err)
-      // Don't throw - let the user see the error message
+      // Don't throw - let the user stay in modal to retry
     }
   }
 
