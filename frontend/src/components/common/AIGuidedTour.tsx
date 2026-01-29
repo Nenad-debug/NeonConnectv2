@@ -138,12 +138,51 @@ Srećan/a u potrazi za poslom! 🚀`,
   },
 ]
 
+const CARD_WIDTH = 448
+const CARD_MIN_HEIGHT = 280
+const GAP = 24
+
+function getCardPosition(highlight: { top: number; left: number; width: number; height: number } | null): { left: string; transform: string; bottom?: string; top?: string; transition: string } {
+  if (typeof window === 'undefined') {
+    return { left: '50%', transform: 'translateX(-50%)', bottom: GAP, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+  }
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+
+  if (!highlight) {
+    const left = Math.max(GAP, (vw - CARD_WIDTH) / 2)
+    return { left: `${left}px`, transform: 'none', bottom: `${GAP}px`, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+  }
+
+  const spaceBelow = vh - (highlight.top + highlight.height + GAP)
+  const spaceRight = vw - (highlight.left + highlight.width + GAP)
+  const spaceLeft = highlight.left - GAP
+  const spaceAbove = highlight.top - GAP
+
+  if (spaceBelow >= CARD_MIN_HEIGHT) {
+    const left = Math.max(GAP, Math.min(highlight.left + highlight.width / 2 - CARD_WIDTH / 2, vw - CARD_WIDTH - GAP))
+    return { left: `${left}px`, transform: 'none', top: `${highlight.top + highlight.height + GAP}px`, bottom: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+  }
+  if (spaceRight >= CARD_WIDTH) {
+    const top = Math.max(GAP, Math.min(highlight.top + highlight.height / 2 - CARD_MIN_HEIGHT / 2, vh - CARD_MIN_HEIGHT - GAP))
+    return { left: `${highlight.left + highlight.width + GAP}px`, transform: 'none', top: `${top}px`, bottom: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+  }
+  if (spaceLeft >= CARD_WIDTH) {
+    const top = Math.max(GAP, Math.min(highlight.top + highlight.height / 2 - CARD_MIN_HEIGHT / 2, vh - CARD_MIN_HEIGHT - GAP))
+    return { left: `${Math.max(GAP, highlight.left - CARD_WIDTH - GAP)}px`, transform: 'none', top: `${top}px`, bottom: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+  }
+  const left = Math.max(GAP, (vw - CARD_WIDTH) / 2)
+  return { left: `${left}px`, transform: 'none', bottom: `${GAP}px`, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+}
+
 export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuidedTourProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [highlightPosition, setHighlightPosition] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const tourRef = useRef<HTMLDivElement>(null)
   const tourSteps = getTourSteps(userName)
+
+  const cardStyle = getCardPosition(highlightPosition)
 
   const updateHighlightPosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect()
@@ -276,7 +315,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
         }
 
         .tour-card {
-          animation: slideInUp 0.4s ease-out;
+          /* position/transition set inline for smooth move when step changes */
         }
 
         .tour-pointer {
@@ -313,15 +352,12 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
         />
       )}
 
-      {/* Tour card - always at bottom of viewport so no scrolling needed */}
+      {/* Tour card - positioned so it doesn't cover highlight; smooth transition when step changes */}
       <div
         ref={tourRef}
         className="tour-card fixed z-[110] w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 shadow-2xl p-8"
         style={{
-          left: '50%',
-          transform: 'translateX(-50%)',
-          bottom: 24,
-          top: 'auto',
+          ...cardStyle,
           maxHeight: '50vh',
           overflowY: 'auto',
         }}
