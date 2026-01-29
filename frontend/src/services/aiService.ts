@@ -73,12 +73,14 @@ export const aiService = {
 
         clearTimeout(timeoutId)
 
-        const data = await response.json()
+        // 404 returns HTML from Netlify – don't parse as JSON
+        const contentType = response.headers.get('content-type') || ''
+        const isJson = contentType.includes('application/json')
 
         if (!response.ok) {
-          console.error('❌ Function error:', data)
-
-          // Handle specific status codes
+          if (response.status === 404) {
+            return 'AI chat trenutno nije dostupan (funkcija nije deploy-ovana). Pokušajte ponovo kasnije ili kontaktirajte podršku.'
+          }
           if (response.status === 403) {
             return 'AI chat nije dostupan (zabranjen pristup). Proverite da li je Netlify funkcija deploy-ovana i da li aplikacija radi na istom domenu.'
           }
@@ -88,10 +90,11 @@ export const aiService = {
           if (response.status === 503) {
             return 'AI servis je privremeno nedostupan. Pokušajte za nekoliko sekundi.'
           }
-
-          return `Greška: ${data.error || 'Nepoznata greška'}`
+          const data = isJson ? await response.json() : {}
+          return `Greška: ${data.error || response.statusText || 'Nepoznata greška'}`
         }
 
+        const data = isJson ? await response.json() : {}
         console.log('✅ Response received')
         return data.response || 'Nisam mogao da generiram odgovor.'
       } catch (err: any) {
@@ -101,7 +104,10 @@ export const aiService = {
           console.error('❌ [AI SERVICE] Request timeout')
           return 'Zahtev je trajao previše dugo. Pokušajte sa kraćom porukom.'
         }
-
+        // JSON parse error (e.g. 404 HTML response)
+        if (err.message?.includes('JSON') || err.message?.includes('Unexpected token')) {
+          return 'AI chat trenutno nije dostupan. Pokušajte ponovo kasnije.'
+        }
         throw err
       }
     } catch (err: any) {

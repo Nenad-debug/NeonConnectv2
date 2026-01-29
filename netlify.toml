@@ -3,7 +3,7 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
-# Serverless functions (AI chat) – must be deployed for /.netlify/functions/ai-chat to work
+# Serverless functions (AI chat) – path relative to base; use frontend/netlify/functions
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
