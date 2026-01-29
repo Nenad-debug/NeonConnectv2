@@ -155,26 +155,33 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
   }
 
   useEffect(() => {
+    if (!isActive) return
     try {
-      console.log('🎯 [AI TOUR] Tour activated, current step:', currentStep)
       const step = tourSteps[currentStep]
-
-      if (step?.target) {
-        const element = document.querySelector(step.target) as HTMLElement
-        if (element) {
-          console.log('✅ [AI TOUR] Found target element:', step.target)
-          updateHighlightPosition(element)
-          window.addEventListener('resize', () => updateHighlightPosition(element))
-          return () => window.removeEventListener('resize', () => updateHighlightPosition(element))
-        }
-      } else {
+      if (!step?.target) {
         setHighlightPosition(null)
+        return
+      }
+      const element = document.querySelector(step.target) as HTMLElement
+      if (!element) {
+        setHighlightPosition(null)
+        return
+      }
+      const handler = () => updateHighlightPosition(element)
+      updateHighlightPosition(element)
+      window.addEventListener('resize', handler)
+      window.addEventListener('scroll', handler, true)
+      const rafId = requestAnimationFrame(() => updateHighlightPosition(element))
+      return () => {
+        window.removeEventListener('resize', handler)
+        window.removeEventListener('scroll', handler, true)
+        cancelAnimationFrame(rafId)
       }
     } catch (err: any) {
       console.error('❌ [AI TOUR] Error:', err)
       setError(err?.message || 'Tour error')
     }
-  }, [currentStep])
+  }, [isActive, currentStep])
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -260,7 +267,7 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
           border-radius: 12px;
           pointer-events: none;
           animation: pulse-highlight 2s ease-in-out infinite;
-          z-index: 51;
+          z-index: 105;
         }
 
         .tour-backdrop {
@@ -280,10 +287,10 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
         }
       `}</style>
 
-      {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+      {/* Dark overlay - z below highlight so highlight stays visible */}
+      <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm" aria-hidden="true"></div>
 
-      {/* Highlight element */}
+      {/* Highlight element - above overlay */}
       {highlightPosition && (
         <>
           <div
@@ -305,20 +312,21 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
               width: highlightPosition.width,
               height: highlightPosition.height,
               backgroundColor: 'transparent',
+              zIndex: 105,
             }}
           ></div>
         </>
       )}
 
-      {/* Tour card */}
+      {/* Tour card - above overlay and highlight */}
       <div
         ref={tourRef}
         className="tour-card fixed z-[110] w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 shadow-2xl p-8"
         style={{
           left: '50%',
           transform: 'translateX(-50%)',
-          bottom: highlightPosition ? 'auto' : '60px',
-          top: highlightPosition ? `${highlightPosition.top + highlightPosition.height + 24}px` : 'auto',
+          bottom: highlightPosition ? undefined : 60,
+          top: highlightPosition ? Math.max(24, highlightPosition.top + highlightPosition.height + 24) : undefined,
           maxHeight: '90vh',
           overflowY: 'auto',
         }}
