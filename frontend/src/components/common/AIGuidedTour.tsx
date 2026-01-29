@@ -174,9 +174,28 @@ function getCardPosition(highlight: { top: number; left: number; width: number; 
   return { left: `${left}px`, transform: 'none', bottom: `${GAP}px`, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
 }
 
+// Clamp value between min and max
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
+}
+
+// Point on card rect closest to target (arrow starts here, on card edge)
+function getArrowStartOnCard(
+  card: { top: number; left: number; width: number; height: number },
+  targetX: number,
+  targetY: number
+): { x: number; y: number } {
+  const cx = card.left + card.width / 2
+  const cy = card.top + card.height / 2
+  const nearestX = clamp(targetX, card.left, card.left + card.width)
+  const nearestY = clamp(targetY, card.top, card.top + card.height)
+  return { x: nearestX, y: nearestY }
+}
+
 export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuidedTourProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [highlightPosition, setHighlightPosition] = useState<any>(null)
+  const [cardPosition, setCardPosition] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const tourRef = useRef<HTMLDivElement>(null)
   const tourSteps = getTourSteps(userName)
@@ -221,6 +240,31 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
       setError(err?.message || 'Tour error')
     }
   }, [isActive, currentStep])
+
+  // Track tour card position so arrow can start from it
+  useEffect(() => {
+    if (!isActive || !highlightPosition) {
+      setCardPosition(null)
+      return
+    }
+    const updateCardPosition = () => {
+      const el = tourRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      setCardPosition({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+    }
+    updateCardPosition()
+    const rafId = requestAnimationFrame(updateCardPosition)
+    const t = setTimeout(updateCardPosition, 100)
+    window.addEventListener('resize', updateCardPosition)
+    window.addEventListener('scroll', updateCardPosition, true)
+    return () => {
+      clearTimeout(t)
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', updateCardPosition)
+      window.removeEventListener('scroll', updateCardPosition, true)
+    }
+  }, [isActive, currentStep, highlightPosition])
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -325,14 +369,20 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
           animation: pulse 2s ease-in-out infinite;
         }
 
-        @keyframes tour-arrow-bounce {
-          0%, 100% { transform: translateY(0); opacity: 1; }
-          50% { transform: translateY(6px); opacity: 0.9; }
+        @keyframes tour-arrow-draw {
+          from { stroke-dashoffset: var(--arrow-length, 400); }
+          to { stroke-dashoffset: 0; }
         }
-        .tour-arrow {
-          animation: tour-arrow-bounce 1.2s ease-in-out infinite;
-          pointer-events: none;
-          margin-left: -18px;
+        @keyframes tour-arrow-pulse {
+          0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.5)); }
+          50% { opacity: 0.85; filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.6)); }
+        }
+        .tour-arrow-line {
+          stroke-dasharray: var(--arrow-length, 400);
+          animation: tour-arrow-draw 0.6s ease-out forwards, tour-arrow-pulse 2s ease-in-out 0.6s infinite;
+        }
+        .tour-arrow-head {
+          animation: tour-arrow-pulse 2s ease-in-out 0.6s infinite;
         }
       `}</style>
 
@@ -360,28 +410,66 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
               height: highlightPosition.height,
             }}
           />
-          {/* Animated arrow pointing at the highlighted element (above or below depending on space) */}
+        </>
+      )}
+
+      {/* Arrow from tour card (main window) to highlighted element — animated */}
+      {highlightPosition && cardPosition && (() => {
+        const targetX = highlightPosition.left + highlightPosition.width / 2
+        const targetY = highlightPosition.top + highlightPosition.height / 2
+        const start = getArrowStartOnCard(cardPosition, targetX, targetY)
+        const dx = targetX - start.x
+        const dy = targetY - start.y
+        const length = Math.sqrt(dx * dx + dy * dy) || 1
+        const angle = Math.atan2(dy, dx)
+        const headSize = 14
+        const headAngle = Math.PI / 6
+        const tipX = targetX - headSize * Math.cos(angle)
+        const tipY = targetY - headSize * Math.sin(angle)
+        const h1x = tipX + headSize * Math.cos(angle - headAngle)
+        const h1y = tipY + headSize * Math.sin(angle - headAngle)
+        const h2x = tipX + headSize * Math.cos(angle + headAngle)
+        const h2y = tipY + headSize * Math.sin(angle + headAngle)
+        const lineEndX = tipX
+        const lineEndY = tipY
+        const lineLength = Math.sqrt((lineEndX - start.x) ** 2 + (lineEndY - start.y) ** 2)
+        return (
           <div
-            className="tour-arrow fixed z-[106]"
-            style={{
-              left: highlightPosition.left + highlightPosition.width / 2,
-              top: highlightPosition.top >= 50 ? highlightPosition.top - 28 : highlightPosition.top + highlightPosition.height + 4,
-              transform: highlightPosition.top >= 50 ? undefined : 'rotate(180deg)',
-            }}
+            className="fixed inset-0 z-[106] pointer-events-none"
+            style={{ left: 0, top: 0, width: '100%', height: '100%' }}
             aria-hidden="true"
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
-              <path d="M12 4v16M12 4l-6 6M12 4l6 6" stroke="url(#tourArrowGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="100%"
+              height="100%"
+              style={{ position: 'absolute', left: 0, top: 0 }}
+            >
               <defs>
                 <linearGradient id="tourArrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#3b82f6" />
                   <stop offset="100%" stopColor="#a855f7" />
                 </linearGradient>
               </defs>
+              <line
+                x1={start.x}
+                y1={start.y}
+                x2={lineEndX}
+                y2={lineEndY}
+                stroke="url(#tourArrowGrad)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                className="tour-arrow-line"
+                style={{ '--arrow-length': lineLength } as React.CSSProperties}
+              />
+              <polygon
+                points={`${targetX},${targetY} ${h1x},${h1y} ${h2x},${h2y}`}
+                fill="url(#tourArrowGrad)"
+                className="tour-arrow-head"
+              />
             </svg>
           </div>
-        </>
-      )}
+        )
+      })()}
 
       {/* Tour card - positioned so it doesn't cover highlight; smooth transition when step changes */}
       <div
