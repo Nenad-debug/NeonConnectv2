@@ -33,6 +33,17 @@ export default function AIChat({
   const [profileData, setProfileData] = useState<Record<string, any>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Profile wizard questions - defined once at component level
+  const wizardQuestions = [
+    { title: 'Kako se zoveš?', field: 'first_name', placeholder: 'Unesi svoje puno ime', type: 'text' as const },
+    { title: 'Koja je tvoja trenutna pozicija/zanimanje?', field: 'current_position', placeholder: 'npr. Software Developer, Designer, itd.', type: 'text' as const },
+    { title: 'Koliko godina iskustva imaš?', field: 'years_experience', placeholder: 'npr. 3 godine', type: 'text' as const },
+    { title: 'Koje su tvoje glavne vještine?', field: 'skills', placeholder: 'npr. React, TypeScript, Python (odvojene zarezima)', type: 'text' as const },
+    { title: 'Koje je tvoje najmanje obrazovanje?', field: 'education', placeholder: 'npr. Fakultet za Informatiku', type: 'text' as const },
+    { title: 'U kojoj lokaciji tražiš posao?', field: 'location', placeholder: 'npr. Beograd, Novi Sad', type: 'text' as const },
+    { title: 'Koja je tvoja očekivana plata (mesečno)?', field: 'expected_salary', placeholder: 'npr. 1500 EUR', type: 'text' as const },
+  ]
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -77,52 +88,6 @@ Mogu ti pomoći sa:
     }
   }
 
-  // Profile wizard questions
-  const wizardQuestions = [
-    {
-      title: 'Kako se zoveš?',
-      field: 'first_name',
-      placeholder: 'Unesi svoje puno ime',
-      type: 'text',
-    },
-    {
-      title: 'Koja je tvoja trenutna pozicija/zanimanje?',
-      field: 'current_position',
-      placeholder: 'npr. Software Developer, Designer, itd.',
-      type: 'text',
-    },
-    {
-      title: 'Koliko godina iskustva imaš?',
-      field: 'years_experience',
-      placeholder: 'npr. 3 godine',
-      type: 'text',
-    },
-    {
-      title: 'Koje su tvoje glavne vještine?',
-      field: 'skills',
-      placeholder: 'npr. React, TypeScript, Python (odvojene zarezima)',
-      type: 'text',
-    },
-    {
-      title: 'Koje je tvoje najmanje obrazovanje?',
-      field: 'education',
-      placeholder: 'npr. Fakultet za Informatiku',
-      type: 'text',
-    },
-    {
-      title: 'U kojoj lokaciji tražiš posao?',
-      field: 'location',
-      placeholder: 'npr. Beograd, Novi Sad',
-      type: 'text',
-    },
-    {
-      title: 'Koja je tvoja očekivana plata (mesečno)?',
-      field: 'expected_salary',
-      placeholder: 'npr. 1500 EUR',
-      type: 'text',
-    },
-  ]
-
   const startProfileWizard = () => {
     setIsProfileWizard(true)
     setWizardStep(0)
@@ -141,7 +106,10 @@ Mogu ti pomoći sa:
 
   const handleWizardInput = async (answer: string) => {
     if (!answer.trim()) return
-
+    if (wizardStep >= wizardQuestions.length) {
+      console.warn('⚠️ Wizard step out of bounds')
+      return
+    }
     const currentQuestion = wizardQuestions[wizardStep]
     const newProfileData = {
       ...profileData,
@@ -251,8 +219,10 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
         return
       }
 
-      // Save user message
-      await aiService.saveChatMessage(userId, 'user', userMessage, context)
+      // Save user message (non-blocking)
+      aiService.saveChatMessage(userId, 'user', userMessage, context).catch((err) =>
+        console.warn('Failed to save user message:', err)
+      )
 
       // Add to UI immediately
       setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
@@ -261,8 +231,10 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
       setLoading(true)
       const aiResponse = await aiService.sendMessage(userMessage, context, messages)
 
-      // Save AI response
-      await aiService.saveChatMessage(userId, 'assistant', aiResponse, context)
+      // Save AI response (non-blocking)
+      aiService.saveChatMessage(userId, 'assistant', aiResponse, context).catch((err) =>
+        console.warn('Failed to save AI message:', err)
+      )
 
       // Add to UI
       setMessages((prev) => [...prev, { role: 'assistant', content: aiResponse }])
@@ -274,20 +246,6 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
       setLoading(false)
     }
   }
-
-  const handleClearHistory = async () => {
-    if (confirm('Želiš li da obriše istoriju razgovora?')) {
-      try {
-        await aiService.clearChatHistory(userId, context)
-        setMessages([])
-      } catch (err) {
-        setError('Greška pri brisanju istorije')
-      }
-    }
-  }
-  
-  // Unused for now but kept for future use
-  void handleClearHistory
 
   if (compact) {
     return (

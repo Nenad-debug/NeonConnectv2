@@ -55,4 +55,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_slug_unique ON public.jobs (slug);
 
 -- Notes:
 -- - `location` should store JSON like { "city": "Belgrade", "country": "Serbia", "lat": 44.7866, "lng": 20.4489 }
+-- - employer_id should reference public.users(id) not public.employer_profiles(user_id)
 -- - After running migration, consider backfilling data and adding application-level slug generation (e.g., title -> slug) and validation.

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Sparkles, Loader, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../../services/supabaseClient'
+import { convertCyrillicToLatin } from '../../utils/cyrillic'
 
 interface ProfileSetupProps {
   onComplete: (profileData: any) => Promise<void>
@@ -161,36 +162,8 @@ VAŽNO:
         const data = await response.json()
         let aiResponse = data.response || userMessage
         
-        // Ensure ekavica and latin characters
-        aiResponse = aiResponse
-          .replace(/ћ/g, 'ć')
-          .replace(/Ћ/g, 'Ć')
-          .replace(/đ/g, 'd')
-          .replace(/Đ/g, 'D')
-          .replace(/ж/g, 'z')
-          .replace(/Ж/g, 'Z')
-          .replace(/ч/g, 'č')
-          .replace(/Ч/g, 'Č')
-          .replace(/ш/g, 'š')
-          .replace(/Ш/g, 'Š')
-          .replace(/ј/g, 'j')
-          .replace(/Ј/g, 'J')
-          .replace(/њ/g, 'nj')
-          .replace(/Њ/g, 'Nj')
-          .replace(/љ/g, 'lj')
-          .replace(/Љ/g, 'Lj')
-          .replace(/а/g, 'a')
-          .replace(/А/g, 'A')
-          .replace(/е/g, 'e')
-          .replace(/Е/g, 'E')
-          .replace(/и/g, 'i')
-          .replace(/И/g, 'I')
-          .replace(/о/g, 'o')
-          .replace(/О/g, 'O')
-          .replace(/у/g, 'u')
-          .replace(/У/g, 'U')
-          .replace(/ы/g, 'i')
-          .replace(/Ы/g, 'I')
+        // Ensure ekavica and latin characters using helper function
+        aiResponse = convertCyrillicToLatin(aiResponse)
 
         // Check if AI rejected or accepted the answer based on structured response
         const trimmedResponse = aiResponse.trim()
@@ -212,36 +185,8 @@ VAŽNO:
           // AI accepted the answer, extract the extracted data
           let extractedData = trimmedResponse.substring(7).trim() // Remove "ACCEPT:" prefix
           
-          // Ensure ekavica and latin characters
-          extractedData = extractedData
-            .replace(/ћ/g, 'ć')
-            .replace(/Ћ/g, 'Ć')
-            .replace(/đ/g, 'd')
-            .replace(/Đ/g, 'D')
-            .replace(/ж/g, 'z')
-            .replace(/Ж/g, 'Z')
-            .replace(/ч/g, 'č')
-            .replace(/Ч/g, 'Č')
-            .replace(/ш/g, 'š')
-            .replace(/Ш/g, 'Š')
-            .replace(/ј/g, 'j')
-            .replace(/Ј/g, 'J')
-            .replace(/њ/g, 'nj')
-            .replace(/Њ/g, 'Nj')
-            .replace(/љ/g, 'lj')
-            .replace(/Љ/g, 'Lj')
-            .replace(/а/g, 'a')
-            .replace(/А/g, 'A')
-            .replace(/е/g, 'e')
-            .replace(/Е/g, 'E')
-            .replace(/и/g, 'i')
-            .replace(/И/g, 'I')
-            .replace(/о/g, 'o')
-            .replace(/О/g, 'O')
-            .replace(/у/g, 'u')
-            .replace(/У/g, 'U')
-            .replace(/ы/g, 'i')
-            .replace(/Ы/g, 'I')
+          // Ensure ekavica and latin characters using helper function
+          extractedData = convertCyrillicToLatin(extractedData)
 
           // Save extracted data
           const newProfileData = {

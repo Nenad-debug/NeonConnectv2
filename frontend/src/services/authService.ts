@@ -93,7 +93,7 @@ export const authService = {
         // Save to session manager (ENCRYPTED) - with timeout protection
         console.log('🔵 [AUTH] Saving session (with timeout)...')
         
-        const saveSessionPromise = Promise.all([
+        await Promise.all([
           sessionManager.saveAccount(data.user.id, email, (userProfile?.role as 'candidate' | 'employer') || 'candidate'),
           sessionManager.setCurrentSession({
             id: data.user.id,
@@ -103,18 +103,7 @@ export const authService = {
           })
         ])
         
-        // Set timeout for session saving (3 seconds max)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session save timeout')), 3000)
-        )
-        
-        try {
-          await Promise.race([saveSessionPromise, timeoutPromise])
-          console.log('✅ [AUTH] Session saved successfully')
-        } catch (timeoutError) {
-          console.warn('⚠️ [AUTH] Session save timeout, continuing anyway...', timeoutError)
-          // Continue anyway - session will be saved eventually
-        }
+        console.log('✅ [AUTH] Session saved successfully')
 
         // Clear rate limit on successful login
         rateLimitService.clearRateLimit('login', email)

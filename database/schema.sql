@@ -46,7 +46,7 @@ CREATE TABLE public.employer_profiles (
 -- Jobs table
 CREATE TABLE public.jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  employer_id UUID NOT NULL REFERENCES public.employer_profiles(user_id) ON DELETE CASCADE,
+  employer_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   category TEXT NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE public.jobs (
 CREATE TABLE public.applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   job_id UUID NOT NULL REFERENCES public.jobs(id) ON DELETE CASCADE,
-  candidate_id UUID NOT NULL REFERENCES public.candidate_profiles(user_id) ON DELETE CASCADE,
+  candidate_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   cover_letter TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'accepted', 'rejected')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -89,7 +89,7 @@ ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for public read access to jobs
 CREATE POLICY "Jobs are viewable by everyone" ON public.jobs
-  FOR SELECT USING (status = 'active');
+  FOR SELECT USING (status = 'active' OR auth.uid() = employer_id);
 
 -- RLS Policies for users to read their own data
 CREATE POLICY "Users can read own data" ON public.users
@@ -98,8 +98,14 @@ CREATE POLICY "Users can read own data" ON public.users
 CREATE POLICY "Candidates can read own profile" ON public.candidate_profiles
   FOR SELECT USING (auth.uid() = user_id);
 
+CREATE POLICY "Candidates can update own profile" ON public.candidate_profiles
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Employers can read own profile" ON public.employer_profiles
   FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Employers can update own profile" ON public.employer_profiles
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Insert/Update policies
 CREATE POLICY "Users can insert own data" ON public.users
@@ -115,10 +121,22 @@ CREATE POLICY "Employers can create jobs" ON public.jobs
   FOR INSERT WITH CHECK (auth.uid() = employer_id);
 
 CREATE POLICY "Employers can update own jobs" ON public.jobs
-  FOR UPDATE USING (auth.uid() = employer_id);
+  FOR UPDATE USING (auth.uid() = employer_id) WITH CHECK (auth.uid() = employer_id);
+
+CREATE POLICY "Candidates can read own applications" ON public.applications
+  FOR SELECT USING (auth.uid() = candidate_id);
+
+CREATE POLICY "Employers can read applications for their jobs" ON public.applications
+  FOR SELECT USING (auth.uid() IN (SELECT employer_id FROM public.jobs WHERE id = job_id));
 
 CREATE POLICY "Candidates can create applications" ON public.applications
   FOR INSERT WITH CHECK (auth.uid() = candidate_id);
+
+CREATE POLICY "Candidates can update own applications" ON public.applications
+  FOR UPDATE USING (auth.uid() = candidate_id) WITH CHECK (auth.uid() = candidate_id);
+
+CREATE POLICY "Employers can update applications for their jobs" ON public.applications
+  FOR UPDATE USING (auth.uid() IN (SELECT employer_id FROM public.jobs WHERE id = job_id)) WITH CHECK (auth.uid() IN (SELECT employer_id FROM public.jobs WHERE id = job_id));
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

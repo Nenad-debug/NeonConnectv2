@@ -20,14 +20,19 @@ export default function GlobalAIAssistant() {
       if (user) {
         setUserId(user.id)
         // Get user's name from profile
-        const { data: profile } = await supabase
-          .from('candidate_profiles')
-          .select('first_name')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (profile?.first_name) {
-          setUserName(profile.first_name) // First name only
+        try {
+          const { data: profile, error } = await supabase
+            .from('candidate_profiles')
+            .select('first_name')
+            .eq('user_id', user.id)
+            .single()
+          
+          // Check for error and data existence
+          if (!error && profile?.first_name) {
+            setUserName(profile.first_name) // First name only
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user profile:', err)
         }
       }
     }

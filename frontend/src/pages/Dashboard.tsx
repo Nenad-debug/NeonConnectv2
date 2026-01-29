@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [showAITour, setShowAITour] = useState(false)
   const navigate = useNavigate()
 
-  // Mock data - kasnije iz baze
+  // MOCK DATA - Replace with real data from Supabase when available
   const mockApplications = [
     {
       id: '1',
@@ -44,6 +44,7 @@ export default function Dashboard() {
     }
   ]
 
+  // MOCK DATA - Replace with real data from Supabase when available
   const mockSavedJobs = [
     {
       id: '3',
@@ -65,6 +66,7 @@ export default function Dashboard() {
     }
   ]
 
+  // MOCK DATA - Replace with real data from Supabase when available
   const mockRecommendedJobs = [
     {
       id: '5',
@@ -90,6 +92,7 @@ export default function Dashboard() {
     }
   ]
 
+  // MOCK DATA - Replace with real data from Supabase when available
   const mockNotifications = [
     {
       id: '1',
