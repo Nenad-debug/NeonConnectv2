@@ -3,11 +3,12 @@ import { Sparkles, Loader, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../../services/supabaseClient'
 
 interface ProfileSetupProps {
+  onComplete: (profileData: any) => Promise<void>
   isOpen: boolean
   user?: any
 }
 
-export default function ProfileSetup({ isOpen, user }: ProfileSetupProps) {
+export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupProps) {
   const [wizardStep, setWizardStep] = useState(0)
   const [messages, setMessages] = useState<any[]>([])
   const [input, setInput] = useState('')
@@ -356,8 +357,20 @@ Sada mozes da trazis poslove! 🚀`,
         },
       ])
 
-      // Samo prikaži završnu poruku, ne pozivaj onComplete()
-      // Modal ostaje otvoren
+      // Pozovi onComplete nakon 2s da se pokrene success animation
+      setTimeout(() => {
+        onComplete({
+          first_name: firstName,
+          last_name: lastName,
+          bio: data.bio,
+          skills: skills,
+          current_position: data.current_position,
+          years_experience: data.years_experience,
+          education: data.education,
+          location: data.location,
+          expected_salary: data.expected_salary,
+        })
+      }, 2000)
     } catch (err: any) {
       console.error('Save error:', err)
       setMessages((prev) => [
