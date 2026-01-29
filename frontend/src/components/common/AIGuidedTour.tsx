@@ -144,7 +144,7 @@ const GAP = 24
 
 function getCardPosition(highlight: { top: number; left: number; width: number; height: number } | null): { left: string; transform: string; bottom?: string; top?: string; transition: string } {
   if (typeof window === 'undefined') {
-    return { left: '50%', transform: 'translateX(-50%)', bottom: GAP, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
+    return { left: '50%', transform: 'translateX(-50%)', bottom: `${GAP}px`, top: 'auto', transition: 'left 0.35s ease-out, top 0.35s ease-out, bottom 0.35s ease-out' }
   }
   const vw = window.innerWidth
   const vh = window.innerHeight
@@ -157,7 +157,6 @@ function getCardPosition(highlight: { top: number; left: number; width: number; 
   const spaceBelow = vh - (highlight.top + highlight.height + GAP)
   const spaceRight = vw - (highlight.left + highlight.width + GAP)
   const spaceLeft = highlight.left - GAP
-  const spaceAbove = highlight.top - GAP
 
   if (spaceBelow >= CARD_MIN_HEIGHT) {
     const left = Math.max(GAP, Math.min(highlight.left + highlight.width / 2 - CARD_WIDTH / 2, vw - CARD_WIDTH - GAP))
