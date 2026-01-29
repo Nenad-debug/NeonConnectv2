@@ -1,5 +1,5 @@
+import React, { useState, useEffect } from 'react'
 import { X, Shield, Wrench, CheckCircle2, AlertTriangle, BadgeCheck } from 'lucide-react'
-import { useState, useEffect } from 'react'
 
 const STORAGE_KEY = 'neon_maintenance_popup_seen'
 const HIDE_FOR_MS = 24 * 60 * 60 * 1000 // 24h
@@ -47,7 +47,7 @@ export default function MaintenanceBanner() {
   if (!isVisible) return null
 
   return (
-    <>
+    <React.Fragment>
       <style>{`
         @keyframes maintenance-backdrop-in {
           from { opacity: 0; }
@@ -212,9 +212,8 @@ export default function MaintenanceBanner() {
               </button>
             </div>
           </div>
-          </div>
         </div>
       </div>
-    </>
+    </React.Fragment>
   )
 }
