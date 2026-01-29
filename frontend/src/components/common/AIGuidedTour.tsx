@@ -185,8 +185,6 @@ function getArrowStartOnCard(
   targetX: number,
   targetY: number
 ): { x: number; y: number } {
-  const cx = card.left + card.width / 2
-  const cy = card.top + card.height / 2
   const nearestX = clamp(targetX, card.left, card.left + card.width)
   const nearestY = clamp(targetY, card.top, card.top + card.height)
   return { x: nearestX, y: nearestY }
@@ -420,7 +418,6 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
         const start = getArrowStartOnCard(cardPosition, targetX, targetY)
         const dx = targetX - start.x
         const dy = targetY - start.y
-        const length = Math.sqrt(dx * dx + dy * dy) || 1
         const angle = Math.atan2(dy, dx)
         const headSize = 14
         const headAngle = Math.PI / 6
