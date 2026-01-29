@@ -37,19 +37,19 @@ exports.handler = async (event: any) => {
       }
     }
 
-    // Get Groq API key
-    const apiKey = process.env.GROQ_API_KEY
+    // Get AIML API key
+    const apiKey = process.env.AIML_API_KEY
     if (!apiKey) {
-      console.error('❌ GROQ_API_KEY not set')
+      console.error('❌ AIML_API_KEY not set')
       return {
         statusCode: 500,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
         body: JSON.stringify({ error: 'API key not configured' }),
       }
     }
-    console.log('✅ Groq API key found')
+    console.log('✅ AIML API key found')
 
-    // Build conversation history for Groq
+    // Build conversation history for AIML
     const conversationHistory = previousMessages
       ?.filter((m: any) => m.role && m.content)
       .map((m: any) => ({
@@ -60,7 +60,7 @@ exports.handler = async (event: any) => {
     // Add current message
     conversationHistory.push({
       role: 'user',
-      parts: [{ text: message }],
+      content: message,
     })
 
     // System prompt based on context
@@ -74,9 +74,9 @@ exports.handler = async (event: any) => {
 
     const systemPrompt = systemPrompts[context] || systemPrompts.default
 
-    // Call Groq API (OpenAI-compatible)
+    // Call AIML API (OpenAI-compatible)
     const response = await fetch(
-      `https://api.groq.com/openai/v1/chat/completions`,
+      `https://api.aimlapi.com/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
@@ -84,11 +84,10 @@ exports.handler = async (event: any) => {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'mixtral-8x7b-32768',
+          model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: systemPrompt },
             ...conversationHistory,
-            { role: 'user', content: message },
           ],
           temperature: 0.7,
           max_tokens: 1024,
@@ -99,20 +98,20 @@ exports.handler = async (event: any) => {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('❌ Groq API error:', data)
+      console.error('❌ AIML API error:', data)
       return {
         statusCode: response.status,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: data.error?.message || 'Groq API error' }),
+        body: JSON.stringify({ error: data.error?.message || 'AIML API error' }),
       }
     }
 
-    // Extract response text from Groq
+    // Extract response text from AIML (GPT-3.5)
     const responseText =
       data.choices?.[0]?.message?.content ||
       'Извините, нема одговора од AI-а.'
 
-    console.log('✅ Groq response received')
+    console.log('✅ AIML response received')
     return {
       statusCode: 200,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
