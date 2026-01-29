@@ -68,6 +68,28 @@ ${WIZARD_QUESTIONS[0].title}`
 
   const wizardQuestions = WIZARD_QUESTIONS
 
+  const handleSkipWizard = async () => {
+    if (isCompleting) return
+    setIsCompleting(true)
+    try {
+      await onComplete({
+        first_name: user?.user_metadata?.full_name?.split(' ')[0] || 'Korisnik',
+        last_name: user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        bio: '',
+        skills: [],
+        current_position: '',
+        years_experience: '',
+        education: '',
+        location: '',
+        expected_salary: '',
+      })
+    } catch (err) {
+      console.error('Skip wizard error:', err)
+    } finally {
+      setIsCompleting(false)
+    }
+  }
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || loading) return
@@ -360,6 +382,15 @@ Sada mozes da trazis poslove! 🚀`,
                 </h2>
                 <p className="text-xs text-slate-400">AI ce te voditi kroz postavljanje profila</p>
               </div>
+              <button
+                type="button"
+                onClick={handleSkipWizard}
+                disabled={isCompleting}
+                className="ml-auto px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-400/90 text-xs font-medium hover:bg-amber-500/10 disabled:opacity-50 transition-colors"
+                title="Preskoči wizard (privremeno za develop)"
+              >
+                Skip (dev)
+              </button>
             </div>
           </div>
 
