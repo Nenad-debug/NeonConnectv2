@@ -200,8 +200,10 @@ export default function Dashboard() {
   const handleSuccessAnimationComplete = () => {
     console.log('🎉 [DASHBOARD] Success animation completed, starting tour...')
     setShowSuccessAnimation(false)
-    // Start the AI guided tour after success animation
-    setShowAITour(true)
+    // Delay before starting tour to ensure DOM is ready
+    setTimeout(() => {
+      setShowAITour(true)
+    }, 500)
   }
 
   const handleAITourComplete = () => {
@@ -234,11 +236,15 @@ export default function Dashboard() {
       />
 
       {/* AI Guided Tour */}
-      <AIGuidedTour
-        isActive={showAITour}
-        userName={user?.user_metadata?.full_name?.split(' ')[0]}
-        onComplete={handleAITourComplete}
-      />
+      {showAITour && (
+        <div className="relative z-50">
+          <AIGuidedTour
+            isActive={showAITour}
+            userName={user?.user_metadata?.full_name?.split(' ')[0]}
+            onComplete={handleAITourComplete}
+          />
+        </div>
+      )}
 
       {/* Profile Setup Modal */}
       <ProfileSetup

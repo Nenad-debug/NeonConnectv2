@@ -140,35 +140,13 @@ Srećan/a u potrazi za poslom! 🚀`,
 export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuidedTourProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [highlightPosition, setHighlightPosition] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
   const tourRef = useRef<HTMLDivElement>(null)
   const tourSteps = getTourSteps(userName)
 
-  useEffect(() => {
-    if (!isActive) {
-      console.log('🚫 [AI TOUR] Tour is not active')
-      return
-    }
-
-    console.log('🎯 [AI TOUR] Tour activated, current step:', currentStep)
-
-    const step = tourSteps[currentStep]
-
-    if (step.target) {
-      const element = document.querySelector(step.target) as HTMLElement
-      if (element) {
-        console.log('✅ [AI TOUR] Found target element:', step.target)
-        updateHighlightPosition(element)
-
-        window.addEventListener('resize', () => updateHighlightPosition(element))
-        return () => window.removeEventListener('resize', () => updateHighlightPosition(element))
-      } else {
-        console.log('⚠️ [AI TOUR] Target element not found:', step.target)
-      }
-    } else {
-      console.log('ℹ️ [AI TOUR] No target for this step')
-      setHighlightPosition(null)
-    }
-  }, [isActive, currentStep])
+  if (!isActive) {
+    return null
+  }
 
   const updateHighlightPosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect()
@@ -179,6 +157,28 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
       height: rect.height + 16,
     })
   }
+
+  useEffect(() => {
+    try {
+      console.log('🎯 [AI TOUR] Tour activated, current step:', currentStep)
+      const step = tourSteps[currentStep]
+
+      if (step?.target) {
+        const element = document.querySelector(step.target) as HTMLElement
+        if (element) {
+          console.log('✅ [AI TOUR] Found target element:', step.target)
+          updateHighlightPosition(element)
+          window.addEventListener('resize', () => updateHighlightPosition(element))
+          return () => window.removeEventListener('resize', () => updateHighlightPosition(element))
+        }
+      } else {
+        setHighlightPosition(null)
+      }
+    } catch (err: any) {
+      console.error('❌ [AI TOUR] Error:', err)
+      setError(err?.message || 'Tour error')
+    }
+  }, [currentStep])
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -206,6 +206,22 @@ export default function AIGuidedTour({ isActive, userName, onComplete }: AIGuide
 
   const step = tourSteps[currentStep]
   const isLastStep = currentStep === tourSteps.length - 1
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur">
+        <div className="bg-slate-800 border border-red-500/30 rounded-xl p-6 max-w-md">
+          <p className="text-red-400 mb-4">Došlo je do greške pri učitavanju tour-a</p>
+          <button
+            onClick={onComplete}
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            Zatvori
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[110]">
