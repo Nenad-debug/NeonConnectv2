@@ -17,7 +17,14 @@ export default function ProfileSetup({ onComplete, isOpen, user }: ProfileSetupP
   const [profileData, setProfileData] = useState<Record<string, any>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  if (!isOpen || !user) return null
+  useEffect(() => {
+    console.log('📱 [PROFILE SETUP] isOpen changed:', isOpen)
+  }, [isOpen])
+
+  if (!isOpen || !user) {
+    console.log('🚫 [PROFILE SETUP] Not rendering - isOpen:', isOpen, 'user:', user)
+    return null
+  }
 
   const wizardQuestions = [
     {
