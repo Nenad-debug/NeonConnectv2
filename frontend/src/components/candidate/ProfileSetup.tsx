@@ -117,16 +117,29 @@ ${wizardQuestions[0].title}`
         const fields = currentQuestion.fields
 
         // Use AI to extract data from user's answer
-        const extractionPrompt = `Pitanje je: "${currentQuestion.title}"
-Korisnik je odgovorio: "${userMessage}"
+        const extractionPrompt = `TASK: Validiraj odgovor korisnika na pitanje.
 
-PRVO VALIDIRANJE:
-- Provjeri da li je odgovor relevantan za pitanje
-- Ako NIJE relevantno (npr. unese nesto sasvim drugacije): Objasni ZASTO to nije odgovor na to pitanje i PONOVI pitanje
-- Ako JESTE relevantno: ${currentQuestion.instruction}
+QUESTION: "${currentQuestion.title}"
+USER ANSWER: "${userMessage}"
 
-VAZNO: Koristi samo EKAVISKI oblik i LATINICU (ne ćirilicu).
-Ako objasnjavam relevantnost, budi ljubazan ali jasan.`
+VALIDATION RULES:
+1. Je li odgovor RELEVANTAN za ovo pitanje?
+2. Ako NIJE relevantno: Odgovori sa "REJECT: [objasnjenje zasto nije relevantno, PONOVI pitanje]"
+3. Ako JESTE relevantno: Primeni zadatak ispod
+
+IF RELEVANT, APPLY THIS:
+${currentQuestion.instruction}
+
+OUTPUT FORMAT:
+- Ako ODBIJAŠ: REJECT: [kratko objasnjenje + ponavljanje pitanja]
+- Ako PRIHVATAŠ: ACCEPT: [samo ekstraktovana vrednost bez dodatnog teksta]
+
+VAŽNO:
+- Za REJECT: budi ljubazan i ponovi tačno ovo pitanje: "${currentQuestion.title}"
+- Za ACCEPT: vrati SAMO ekstraktovanu vrednost, bez "Tvoj odgovor je..." i sličnog
+- Koristi EKAVICU i LATINICU (bez ć, č, š, ž, đ)
+- Za biografiju: ekstraktuj samo suštinu (100-150 reči)
+- Za veštine: vrati kao JSON array ["skill1", "skill2"]`
 
         const response = await fetch('/.netlify/functions/ai-chat', {
           method: 'POST',
@@ -172,30 +185,61 @@ Ako objasnjavam relevantnost, budi ljubazan ali jasan.`
           .replace(/ы/g, 'i')
           .replace(/Ы/g, 'I')
 
-        // Check if AI rejected the answer (detected irrelevance) or accepted it
-        // If response contains keywords about rejecting/repeating question, it's a rejection
-        const isRejection = aiResponse.toLowerCase().includes('nije') ||
-                            aiResponse.toLowerCase().includes('ne odgovara') ||
-                            aiResponse.toLowerCase().includes('ponovi') ||
-                            aiResponse.toLowerCase().includes('molim') ||
-                            aiResponse.toLowerCase().includes('odgovor na') ||
-                            aiResponse.toLowerCase().includes('sljedeći')
+        // Check if AI rejected or accepted the answer based on structured response
+        const trimmedResponse = aiResponse.trim()
+        const isRejection = trimmedResponse.toUpperCase().startsWith('REJECT:')
+        const isAcceptance = trimmedResponse.toUpperCase().startsWith('ACCEPT:')
 
         if (isRejection) {
-          // AI rejected the answer, show explanation and stay on same question
+          // AI rejected the answer, extract rejection message
+          const rejectionMsg = trimmedResponse.substring(7).trim() // Remove "REJECT:" prefix
           setMessages((prev) => [
             ...prev,
             {
               role: 'assistant',
-              content: aiResponse,
+              content: rejectionMsg,
             },
           ])
-          // Don't advance to next question
-        } else {
-          // AI accepted the answer, save data and move to next question
+          // Don't advance to next question - user stays on same question
+        } else if (isAcceptance) {
+          // AI accepted the answer, extract the extracted data
+          let extractedData = trimmedResponse.substring(7).trim() // Remove "ACCEPT:" prefix
+          
+          // Ensure ekavica and latin characters
+          extractedData = extractedData
+            .replace(/ћ/g, 'ć')
+            .replace(/Ћ/g, 'Ć')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'D')
+            .replace(/ж/g, 'z')
+            .replace(/Ж/g, 'Z')
+            .replace(/ч/g, 'č')
+            .replace(/Ч/g, 'Č')
+            .replace(/ш/g, 'š')
+            .replace(/Ш/g, 'Š')
+            .replace(/ј/g, 'j')
+            .replace(/Ј/g, 'J')
+            .replace(/њ/g, 'nj')
+            .replace(/Њ/g, 'Nj')
+            .replace(/љ/g, 'lj')
+            .replace(/Љ/g, 'Lj')
+            .replace(/а/g, 'a')
+            .replace(/А/g, 'A')
+            .replace(/е/g, 'e')
+            .replace(/Е/g, 'E')
+            .replace(/и/g, 'i')
+            .replace(/И/g, 'I')
+            .replace(/о/g, 'o')
+            .replace(/О/g, 'O')
+            .replace(/у/g, 'u')
+            .replace(/У/g, 'U')
+            .replace(/ы/g, 'i')
+            .replace(/Ы/g, 'I')
+
+          // Save extracted data
           const newProfileData = {
             ...profileData,
-            [fields[0]]: aiResponse,
+            [fields[0]]: extractedData,
           }
           setProfileData(newProfileData)
 
@@ -204,7 +248,7 @@ Ako objasnjavam relevantnost, budi ljubazan ali jasan.`
             ...prev,
             {
               role: 'assistant',
-              content: `✅ Spreo/la! Tvoj odgovor je: "${aiResponse}"\n\n${
+              content: `✅ Spreo/la! Tvoj odgovor je sacuvan.\n\n${
                 wizardStep < wizardQuestions.length - 1
                   ? `Sledece pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
                   : `🎉 Svi podaci su prikupljeni! Cuva se tvoj profil...`
@@ -216,6 +260,32 @@ Ako objasnjavam relevantnost, budi ljubazan ali jasan.`
             setWizardStep(wizardStep + 1)
           } else {
             // Save profile to database
+            saveProfile(newProfileData)
+          }
+        } else {
+          // Fallback: if response doesn't start with REJECT: or ACCEPT:, treat as acceptance
+          // This handles cases where AI doesn't follow format strictly
+          const newProfileData = {
+            ...profileData,
+            [fields[0]]: trimmedResponse,
+          }
+          setProfileData(newProfileData)
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: `✅ Spreo/la! Tvoj odgovor je sacuvan.\n\n${
+                wizardStep < wizardQuestions.length - 1
+                  ? `Sledece pitanje:\n\n${wizardQuestions[wizardStep + 1].title}`
+                  : `🎉 Svi podaci su prikupljeni! Cuva se tvoj profil...`
+              }`,
+            },
+          ])
+
+          if (wizardStep < wizardQuestions.length - 1) {
+            setWizardStep(wizardStep + 1)
+          } else {
             saveProfile(newProfileData)
           }
         }
