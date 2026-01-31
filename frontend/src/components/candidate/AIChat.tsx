@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Send, Loader, X, Sparkles, Image as ImageIcon } from 'lucide-react'
+import { Send, Loader, X, Sparkles } from 'lucide-react'
 import { aiService } from '../../services/aiService'
 import { supabase } from '../../services/supabaseClient'
 
@@ -31,9 +31,7 @@ export default function AIChat({
   const [isProfileWizard, setIsProfileWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
   const [profileData, setProfileData] = useState<Record<string, any>>({})
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Profile wizard questions - defined once at component level
   const wizardQuestions = [
@@ -75,17 +73,6 @@ Mogu ti pomoći sa:
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
   }
 
   const loadHistory = async () => {
@@ -209,7 +196,7 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if ((!input.trim() && !imagePreview) || loading) return
+    if (!input.trim() || loading) return
 
     // If in wizard mode, handle wizard input
     if (isProfileWizard) {
@@ -232,42 +219,25 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
         return
       }
 
-      // Add message with image if present
-      const msgToAdd: any = { role: 'user', content: userMessage }
-      if (imagePreview) {
-        msgToAdd.image = imagePreview
-      }
-      setMessages((prev) => [...prev, msgToAdd])
-      setImagePreview(null)
-
       // Save user message (non-blocking)
       aiService.saveChatMessage(userId, 'user', userMessage, context).catch((err) =>
         console.warn('Failed to save user message:', err)
       )
 
+      // Add to UI immediately
+      setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
+
       // Get AI response with userId for rate limiting
       setLoading(true)
       const aiResponse = await aiService.sendMessage(userMessage, context, messages, userId)
 
-      // Parse AI response - can be plain text or JSON with image
-      let parsedResponse: any = { content: aiResponse, image: null }
-      try {
-        const parsed = JSON.parse(aiResponse)
-        if (parsed.content || parsed.image) {
-          parsedResponse = parsed
-        }
-      } catch (e) {
-        // Response is plain text, not JSON
-        parsedResponse = { content: aiResponse, image: null }
-      }
-
       // Save AI response (non-blocking)
-      aiService.saveChatMessage(userId, 'assistant', parsedResponse.content || aiResponse, context).catch((err) =>
+      aiService.saveChatMessage(userId, 'assistant', aiResponse, context).catch((err) =>
         console.warn('Failed to save AI message:', err)
       )
 
       // Add to UI
-      setMessages((prev) => [...prev, { role: 'assistant', content: parsedResponse.content, image: parsedResponse.image }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: aiResponse }])
     } catch (err: any) {
       console.error('Chat error:', err)
       setError(err.message || 'Greška pri slanju poruke')
@@ -391,32 +361,28 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} message-item`}>
                 <div
-                  className={`max-w-2xl ${
+                  className={`max-w-xl px-4 py-3 rounded-lg relative ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl rounded-tr-lg shadow-md'
-                      : 'bg-gray-50 text-gray-900 rounded-3xl rounded-tl-lg border border-gray-200 shadow-sm'
-                  } px-5 py-3`}
+                      ? 'bg-blue-600 text-white rounded-br-none'
+                      : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
+                  }`}
                 >
-                  {msg.image && (
-                    <div className="mb-3">
-                      <img 
-                        src={msg.image} 
-                        alt="User shared image" 
-                        className="rounded-2xl w-full max-h-80 object-cover"
-                      />
+                  {msg.role === 'assistant' && (
+                    <div className="absolute -bottom-1 -right-1 opacity-10 pointer-events-none">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-gray-900">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                      </svg>
                     </div>
                   )}
-                  {msg.content && (
-                    <p className="text-base leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
-                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
               </div>
             ))}
             {loading && (
               <div className="flex justify-start message-item">
-                <div className="bg-gray-50 border border-gray-200 text-gray-800 px-5 py-3 rounded-3xl rounded-tl-lg flex items-center gap-3 wizard-progress shadow-sm">
+                <div className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-3 rounded-lg rounded-bl-none flex items-center gap-3 wizard-progress">
                   <Loader className="w-4 h-4 animate-spin text-blue-600" />
-                  <span className="text-base font-medium">Razmišljam...</span>
+                  <span className="text-sm">Razmišljam...</span>
                 </div>
               </div>
             )}
@@ -449,22 +415,6 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
         )}
 
         <form onSubmit={handleSendMessage} className="p-5">
-          {imagePreview && (
-            <div className="mb-3 relative inline-block">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                className="rounded-xl h-20 w-20 object-cover border-2 border-blue-600"
-              />
-              <button
-                type="button"
-                onClick={() => setImagePreview(null)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
-              >
-                ✕
-              </button>
-            </div>
-          )}
           <div className="flex gap-2">
             <input
               type="text"
@@ -476,31 +426,15 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
                   ? wizardQuestions[wizardStep]?.placeholder || 'Odgovori...'
                   : 'Napišite vašu poruku...'
               }
-              className="flex-1 px-4 py-2.5 rounded-full bg-gray-100 border-2 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-0 disabled:opacity-50 transition-all text-base font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-all text-sm"
               autoFocus
             />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageSelect}
-              accept="image/*"
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              className="px-3 py-2.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 transition-all flex items-center justify-center"
-              title="Dodaj sliku"
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
             <button
               type="submit"
-              disabled={loading || (!input.trim() && !imagePreview)}
-              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-base shadow-md"
+              disabled={loading || !input.trim()}
+              className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4" />
             </button>
           </div>
 

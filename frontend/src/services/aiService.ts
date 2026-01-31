@@ -246,39 +246,6 @@ export const aiService = {
     }
   },
 
-  /**
-   * Generate image based on prompt
-   */
-  async generateImage(prompt: string, userId?: string): Promise<string> {
-    try {
-      console.log('🎨 [AI SERVICE] Requesting image generation')
-
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000)
-
-      const response = await fetch('/.netlify/functions/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Generiši sliku: ${prompt}`,
-          context: 'general',
-          previousMessages: [],
-          userId: userId,
-          generateImage: true,
-        }),
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      const data = await response.json()
-      console.log('✅ Image generation response received')
-      return data.imageUrl || data.response
-    } catch (err: any) {
-      console.error('❌ [AI SERVICE] Image generation error:', err)
-      return ''
-    }
-  },
 }
 
 export default aiService
