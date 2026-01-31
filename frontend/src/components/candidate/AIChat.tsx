@@ -347,13 +347,13 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
       `}</style>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-900/40">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-3">
-              <p className="text-5xl">🤖</p>
-              <p className="text-slate-200 font-semibold">Pokreni razgovor sa AI asistentom</p>
-              <p className="text-sm text-slate-400">Mogu ti pomoći sa sve što te zanima</p>
+              <p className="text-5xl">💼</p>
+              <p className="text-gray-800 font-semibold text-lg">NeonConnect AI Asistent</p>
+              <p className="text-sm text-gray-500">Kako mogu da vam pomognem?</p>
             </div>
           </div>
         ) : (
@@ -361,10 +361,10 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} message-item`}>
                 <div
-                  className={`max-w-lg px-5 py-3 rounded-xl ${
+                  className={`max-w-xl px-4 py-3 rounded-lg ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-br-none shadow-lg'
-                      : 'bg-slate-800/80 text-slate-100 rounded-bl-none border border-slate-700/50'
+                      ? 'bg-blue-600 text-white rounded-br-none'
+                      : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -373,9 +373,9 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
             ))}
             {loading && (
               <div className="flex justify-start message-item">
-                <div className="bg-slate-800/80 border border-slate-700/50 text-slate-200 px-5 py-3 rounded-xl rounded-bl-none flex items-center gap-3 wizard-progress">
-                  <Loader className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">AI razmišlja...</span>
+                <div className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-3 rounded-lg rounded-bl-none flex items-center gap-3 wizard-progress">
+                  <Loader className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm">Razmišljam...</span>
                 </div>
               </div>
             )}
@@ -386,79 +386,81 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
 
       {/* Error */}
       {error && (
-        <div className="px-6 py-3 bg-red-500/20 text-red-300 text-sm border-t border-red-500/50">❌ {error}</div>
+        <div className="px-5 py-3 bg-red-50 text-red-700 text-sm border-t border-red-200">❌ {error}</div>
       )}
 
       {/* Input Form */}
-      <form onSubmit={handleSendMessage} className="p-6 border-t border-slate-700/50 bg-slate-900/40">
+      <div className="border-t border-gray-200 bg-white">
         {isProfileWizard && wizardStep < wizardQuestions.length && (
-          <div className="mb-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
-            <p className="text-sm text-blue-300">
-              Pitanje {wizardStep + 1} od {wizardQuestions.length}
-            </p>
-            <div className="h-1 bg-slate-700 rounded-full mt-2">
-              <div
-                className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all"
-                style={{ width: `${((wizardStep + 1) / wizardQuestions.length) * 100}%` }}
-              ></div>
+          <div className="px-5 pt-4 pb-2">
+            <div className="p-3 bg-blue-50 rounded border border-blue-200">
+              <p className="text-xs font-semibold text-blue-700">
+                Korak {wizardStep + 1} od {wizardQuestions.length}
+              </p>
+              <div className="h-1.5 bg-gray-200 rounded-full mt-2">
+                <div
+                  className="h-1.5 bg-blue-600 rounded-full transition-all"
+                  style={{ width: `${((wizardStep + 1) / wizardQuestions.length) * 100}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={loading}
-            placeholder={
-              isProfileWizard
-                ? wizardQuestions[wizardStep]?.placeholder || 'Odgovori...'
-                : 'Napiši svojom poruku...'
-            }
-            className="flex-1 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none disabled:opacity-50 transition-all"
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-          >
-            <Send className="w-4 h-4" />
-            {isProfileWizard ? 'Dalje' : 'Pošalji'}
-          </button>
-        </div>
+        <form onSubmit={handleSendMessage} className="p-5">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={loading}
+              placeholder={
+                isProfileWizard
+                  ? wizardQuestions[wizardStep]?.placeholder || 'Odgovori...'
+                  : 'Napišite vašu poruku...'
+              }
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-all text-sm"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
 
-        {/* Wizard Complete Button */}
-        {isProfileWizard && wizardStep >= wizardQuestions.length && (
-          <button
-            type="button"
-            onClick={() => {
-              setIsProfileWizard(false)
-              setWizardStep(0)
-              setProfileData({})
-            }}
-            className="w-full mt-3 px-4 py-2 rounded-lg bg-slate-700/50 text-white text-sm hover:bg-slate-600/50 transition-all"
-          >
-            ✅ Završi Wizard
-          </button>
+          {/* Wizard Complete Button */}
+          {isProfileWizard && wizardStep >= wizardQuestions.length && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsProfileWizard(false)
+                setWizardStep(0)
+                setProfileData({})
+              }}
+              className="w-full mt-3 px-4 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm font-medium hover:bg-gray-300 transition-all"
+            >
+              ✅ Završi Upitnik
+            </button>
+          )}
+        </form>
+
+        {/* Quick Actions (when no messages) */}
+        {messages.length <= 1 && !isProfileWizard && (
+          <div className="px-5 pb-4 space-y-2">
+            <button
+              onClick={() => {
+                startProfileWizard()
+              }}
+              className="w-full px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium hover:bg-blue-100 transition-all"
+            >
+              📋 Popunite profil
+            </button>
+          </div>
         )}
-      </form>
-
-      {/* Quick Actions (when no messages) */}
-      {messages.length <= 1 && !isProfileWizard && (
-        <div className="px-6 pb-6 space-y-2">
-          <button
-            onClick={() => {
-              startProfileWizard()
-            }}
-            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Popuni profil Wizardom
-          </button>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

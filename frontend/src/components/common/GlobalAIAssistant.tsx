@@ -10,7 +10,6 @@ export default function GlobalAIAssistant() {
   const [userName, setUserName] = useState<string | null>(null)
   const [context, setContext] = useState('general')
   const [showGreeting, setShowGreeting] = useState(true)
-  const [pulse, setPulse] = useState(true)
   const location = useLocation()
 
   useEffect(() => {
@@ -54,12 +53,6 @@ export default function GlobalAIAssistant() {
     }
   }, [location.pathname])
 
-  // Stop pulse animation after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => setPulse(false), 5000)
-    return () => clearTimeout(timer)
-  }, [])
-
   // Close greeting when chat is opened
   useEffect(() => {
     if (isOpen) {
@@ -97,10 +90,10 @@ export default function GlobalAIAssistant() {
 
         <button
           disabled
-          className="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-2xl opacity-50 cursor-not-allowed flex items-center justify-center border-2 border-blue-300/50 ai-button-float"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gray-400 text-white shadow-md cursor-not-allowed opacity-60 flex items-center justify-center"
           title="Prijavi se da koristiš AI asistenta"
         >
-          <Sparkles className="w-7 h-7" />
+          <Sparkles className="w-6 h-6" />
         </button>
       </>
     )
@@ -135,16 +128,15 @@ export default function GlobalAIAssistant() {
 
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-2xl hover:shadow-3xl transition-all flex items-center justify-center border-2 border-blue-300/50 hover:border-blue-300/100 ai-button-float ${pulse ? 'ai-button-glow' : ''}`}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center border border-blue-500 ai-button-float"
         title="Otvori AI asistenta"
       >
-        {pulse && <div className="absolute inset-0 rounded-full border-2 border-blue-400/50 pulse-ring"></div>}
-        <Sparkles className="w-7 h-7 relative z-10 animate-bounce" />
+        <Sparkles className="w-6 h-6" />
       </button>
 
-      {/* Modal with Premium Design */}
+      {/* Modal with Professional Design */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <style>{`
             @keyframes slide-up {
               from { transform: translateY(20px); opacity: 0; }
@@ -156,33 +148,30 @@ export default function GlobalAIAssistant() {
           `}</style>
 
           <div className="w-full max-w-2xl max-h-[90vh] flex flex-col modal-content">
-            {/* Animated Background Border */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-xl opacity-75 animate-pulse"></div>
-            
-            <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900/95 backdrop-blur-2xl rounded-3xl p-8 space-y-6 flex flex-col h-full border border-blue-500/30 shadow-2xl">
-              {/* Header with Premium Design */}
-              <div className="flex items-center justify-between pb-4 border-b border-blue-500/20">
+            <div className="relative bg-white rounded-lg shadow-xl flex flex-col h-full overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
-                    <Sparkles className="w-6 h-6 text-white" />
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      NeonAI Asistent
+                    <h2 className="text-lg font-bold text-gray-900">
+                      NeonConnect Assistant
                     </h2>
-                    <p className="text-xs text-slate-400">Tvoj personalni karnen savjetnik</p>
+                    <p className="text-xs text-gray-500">Asistent za karijeru i poslove</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-slate-700/50 rounded-xl transition-colors text-slate-400 hover:text-white"
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Chat Area */}
-              <div className="flex-1 min-h-0 bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-hidden">
                 <AIChat 
                   userId={userId}
                   context={context}
