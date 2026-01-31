@@ -386,13 +386,17 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
                   } px-5 py-3`}
                 >
                   {msg.image && (
-                    <img 
-                      src={msg.image} 
-                      alt="User shared image" 
-                      className="rounded-2xl mb-2 max-h-64 object-cover"
-                    />
+                    <div className="mb-3">
+                      <img 
+                        src={msg.image} 
+                        alt="User shared image" 
+                        className="rounded-2xl w-full max-h-80 object-cover"
+                      />
+                    </div>
                   )}
-                  <p className="text-base leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                  {msg.content && (
+                    <p className="text-base leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                  )}
                 </div>
               </div>
             ))}
