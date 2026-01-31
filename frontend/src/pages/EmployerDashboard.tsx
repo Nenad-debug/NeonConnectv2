@@ -6,7 +6,6 @@ import Background from '../components/common/Background'
 import { Briefcase, LogOut, Settings } from 'lucide-react'
 
 export default function EmployerDashboard() {
-  const [user, setUser] = useState<any>(null)
   const [companyName, setCompanyName] = useState('')
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -33,7 +32,6 @@ export default function EmployerDashboard() {
           return
         }
 
-        setUser(currentUser)
         setCompanyName(userData?.company_name || '')
       } catch (err) {
         console.error('Error loading user:', err)
@@ -57,17 +55,16 @@ export default function EmployerDashboard() {
 
   if (loading) {
     return (
-      <Background>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
-        </div>
-      </Background>
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+        <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
+      </div>
     )
   }
 
   return (
-    <Background>
-      <div className="min-h-screen pt-20 pb-20">
+    <>
+      <Background />
+      <div className="min-h-screen pt-20 pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -134,6 +131,6 @@ export default function EmployerDashboard() {
           </div>
         </div>
       </div>
-    </Background>
+    </>
   )
 }
