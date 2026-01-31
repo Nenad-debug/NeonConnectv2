@@ -249,13 +249,25 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
       setLoading(true)
       const aiResponse = await aiService.sendMessage(userMessage, context, messages, userId)
 
+      // Parse AI response - can be plain text or JSON with image
+      let parsedResponse: any = { content: aiResponse, image: null }
+      try {
+        const parsed = JSON.parse(aiResponse)
+        if (parsed.content || parsed.image) {
+          parsedResponse = parsed
+        }
+      } catch (e) {
+        // Response is plain text, not JSON
+        parsedResponse = { content: aiResponse, image: null }
+      }
+
       // Save AI response (non-blocking)
-      aiService.saveChatMessage(userId, 'assistant', aiResponse, context).catch((err) =>
+      aiService.saveChatMessage(userId, 'assistant', parsedResponse.content || aiResponse, context).catch((err) =>
         console.warn('Failed to save AI message:', err)
       )
 
       // Add to UI
-      setMessages((prev) => [...prev, { role: 'assistant', content: aiResponse }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: parsedResponse.content, image: parsedResponse.image }])
     } catch (err: any) {
       console.error('Chat error:', err)
       setError(err.message || 'Greška pri slanju poruke')
