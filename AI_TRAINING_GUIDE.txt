@@ -1,0 +1,555 @@
+"""
+=================================================================================
+NEONCONNECT - KOMPREHENZIVNA AI TRAINING DOKUMENTACIJA
+=================================================================================
+
+📅 Datum: 31. Januar 2026
+👤 Vlasnik: Draga Petric
+👨‍💻 Glavni Developer: Nenad Jerotic
+⏱️ Razvoj počeo: 24. Januar 2026 (7 dana)
+📊 Status: PRODUCTION READY 🟢
+🎯 Version: 1.0
+
+=================================================================================
+1. MISIJA & VIZIJA
+=================================================================================
+
+MISIJA:
+"Demokratizovati pristup zapošljavanju kroz AI-powered platformu koja spaja 
+talentovane kandidate sa idealnim poslodavcima u sekundi, ne satima."
+
+VIZIJA:
+"Biti vodećа platforma za zapošljavanje u Balkanu sa najpreciznijom AI 
+preporukom koja čini zapošljavanje intuitivno, brzo i pravedno za sve."
+
+=================================================================================
+2. DETALJNI OPIS PLATFORME
+=================================================================================
+
+NAZIV: NeonConnect
+OPIS: AI-powered employment platform sa inteligentnim matching sistemom
+DOMENI KORIŠĆENJA: Job search, application management, AI-guided profile setup
+TARGET KORISNICI: Oba - Kandidati (jobseekers) i Poslodavci (employers)
+
+GLAVNE KARAKTERISTIKE:
+✅ AI-powered profile setup wizard (vodiće kroz pitanja sa mentorskim savzama)
+✅ Personalized job recommendations (AI matching algoritam)
+✅ Job search sa naprednim filtrima (lokacija, pozicija, plata, tip posla)
+✅ Save jobs for later (lajkovanje poslova sa srčicom)
+✅ Application tracking (prati status prijava)
+✅ AI chat assistant - dostupan 24/7 (globalni chat dugme dole desno)
+✅ Employer dashboard (za poslodavce da upravljaju oglasima)
+✅ Secure authentication (Supabase Auth sa JWT)
+✅ Real-time notifications (obaveštenja za nove poslove i prijave)
+✅ Message system between candidates and employers
+
+=================================================================================
+3. ARHITEKTURA I TEHNOLOŠKI STACK
+=================================================================================
+
+FRONTEND:
+- Framework: React 18.2 sa TypeScript 5.3 (strict mode)
+- Build Tool: Vite 5.4 (super brz build - 6.79 sekundi)
+- CSS: TailwindCSS 3.3 (utility-first CSS framework)
+- UI Ikone: Lucide React (moderne SVG ikone)
+- Routing: React Router v6.20
+- HTTP Client: Axios za API pozive
+- Database Client: @supabase/supabase-js (Supabase SDK)
+- Build Status: ✅ Zero errors, 1433 modules, 6.79 seconds
+
+BACKEND/BAZA PODATAKA:
+- Database: Supabase PostgreSQL (managed Postgres)
+- Project ID: vkxkzgjdluusviccnsdw
+- URL: https://vkxkzgjdluusviccnsdw.supabase.co
+- Tabele: 9 principal (users, candidate_profiles, employer_profiles, jobs, 
+          applications, chat_messages, saved_jobs, notifications, job_stats)
+
+SERVERLESS FUNKCIJE:
+- Netlify Functions (za production)
+- Lokacija: netlify/functions/ai-chat.ts
+- Supabase Edge Functions (alternativa, već deployovano)
+- Deno runtime za serverless code
+
+AI SISTEM:
+- API Provider: AIML API (https://www.aimlapi.com/)
+- Model: GPT-3.5 Turbo (fast, reliable, cost-effective)
+- Temperature: 0.7 (balance između creativity i consistency)
+- Max Tokens: 1024 (dovoljno za detaljne odgovore)
+
+SIGURNOST:
+✅ Row Level Security (RLS) na svim tabelama
+✅ JWT-based authentication
+✅ AES-256-GCM encryption za session storage (encrypted localStorage)
+✅ PBKDF2 key derivation (100,000 iterations)
+✅ Device fingerprinting sa SHA-256
+✅ Input validation & sanitization
+✅ CSRF protection
+✅ Rate limiting (30 zahteva/minut, 300/sat po korisniku)
+✅ Password reset tracking (password_reset_used, password_reset_at fields)
+
+=================================================================================
+4. DATABASE STRUKTURA - DETALJNO
+=================================================================================
+
+TABELE:
+
+1. users (iz Supabase Auth)
+   - id (UUID PK) - automatski iz auth.users
+   - email (TEXT UNIQUE)
+   - role (TEXT: 'candidate' | 'employer')
+   - confirmed_at (TIMESTAMP) - kada je email potvrđen
+   - password_reset_used (BOOLEAN) - da li je reset token korišćen
+   - password_reset_at (TIMESTAMP) - kada je lozinka resetovana
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+2. candidate_profiles
+   - id (UUID PK)
+   - user_id (UUID UNIQUE FK) - referenca na users
+   - first_name (TEXT)
+   - last_name (TEXT)
+   - bio (TEXT) - kratko uvodenje kandidata
+   - skills (TEXT[]) - niz veština kao ["React", "TypeScript", "Node.js"]
+   - resume_url (TEXT) - link na CV
+   - phone (TEXT) - kontakt telefon
+   - location (TEXT) - gde kandidat živi
+   - experience_years (INTEGER) - godina iskustva
+   - profile_image_url (TEXT) - slika profila
+   - education (TEXT[]) - niz obrazovanja
+   - certifications (TEXT[]) - niz sertifikata
+   - languages (TEXT[]) - jezici koje govori
+   - website (TEXT) - lična stranica
+   - github_url (TEXT) - GitHub profil
+   - linkedin_url (TEXT) - LinkedIn profil
+   - profile_complete (BOOLEAN) - da li je profil završen
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+3. employer_profiles
+   - id (UUID PK)
+   - user_id (UUID UNIQUE FK) - referenca na users
+   - company_name (TEXT) - naziv kompanije
+   - company_website (TEXT) - web adresa kompanije
+   - logo_url (TEXT) - logo kompanije
+   - description (TEXT) - opis kompanije
+   - industry (TEXT) - industrija (tech, finance, etc)
+   - size (TEXT) - veličina kompanije (startup, small, medium, large)
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+4. jobs
+   - id (UUID PK)
+   - employer_id (UUID FK) - referenca na users
+   - title (TEXT) - naslov posla ("Senior React Developer")
+   - description (TEXT) - detaljni opis posla
+   - category (TEXT) - kategorija ("Engineering", "Design", "Sales", etc)
+   - salary_min (INTEGER) - minimalna plata
+   - salary_max (INTEGER) - maksimalna plata
+   - salary_currency (TEXT) - valuta ("EUR", "USD", "RSD")
+   - salary_type (TEXT) - tip plate ('yearly' | 'monthly' | 'hourly' | 'negotiable')
+   - location (TEXT) - lokacija posla
+   - job_type (TEXT) - tip posla ('full-time' | 'part-time' | 'contract' | 'freelance')
+   - remote (BOOLEAN) - da li je dostupan remote
+   - experience_level (TEXT) - nivo iskustva ('junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'intern')
+   - required_skills (TEXT[]) - niz obaveznih veština
+   - skills (TEXT[]) - niz poželjih veština
+   - tags (TEXT[]) - tagovi za pretragu
+   - slug (TEXT UNIQUE) - URL-friendly tekst
+   - status (TEXT) - status ('active' | 'closed' | 'draft')
+   - published_at (TIMESTAMP) - kada je objavljen
+   - expires_at (TIMESTAMP) - kada ističe
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+5. applications
+   - id (UUID PK)
+   - job_id (UUID FK) - referenca na jobs
+   - candidate_id (UUID FK) - referenca na users (kandidat)
+   - cover_letter (TEXT) - motivaciono pismo
+   - status (TEXT) - status ('pending' | 'reviewed' | 'accepted' | 'rejected')
+   - archived_at (TIMESTAMP) - soft delete
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+   - UNIQUE(job_id, candidate_id) - jedan kandidat ne može dva puta aplikovati
+
+6. chat_messages (AI chat istorija)
+   - id (UUID PK)
+   - user_id (UUID FK) - referenca na users
+   - role (TEXT) - 'user' | 'assistant'
+   - content (TEXT) - sadržaj poruke
+   - context (TEXT) - 'profile_setup' | 'job_search' | 'employer' | 'general'
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+7. saved_jobs
+   - id (UUID PK)
+   - user_id (UUID FK) - koji kandidat
+   - job_id (UUID FK) - koji posao
+   - saved_at (TIMESTAMP)
+   - UNIQUE(user_id, job_id) - kandidat ne može dva puta sačuvati isti posao
+
+8. notifications
+   - id (UUID PK)
+   - user_id (UUID FK)
+   - type (TEXT) - tip obaveštenja
+   - title (TEXT)
+   - message (TEXT)
+   - related_id (TEXT) - ID čega se tiče (job_id, application_id, itd)
+   - is_read (BOOLEAN)
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+9. job_stats (analytics)
+   - id (UUID PK)
+   - job_id (UUID FK)
+   - views_count (INTEGER) - broj gledanja
+   - applications_count (INTEGER) - broj prijava
+   - last_viewed_at (TIMESTAMP)
+   - created_at (TIMESTAMP)
+   - updated_at (TIMESTAMP)
+
+RLS POLITIKE: 30+ politika
+- Kandidati vide samo svoje profile i sve aktivne poslove
+- Poslodavci vide samo svoje profile, svoje poslove i aplikacije za svoje poslove
+- Javne: svi vide aktivne poslove
+- Private: svako vidi samo svoje podatke
+
+=================================================================================
+5. AI CHAT SISTEM - DETALJNO
+=================================================================================
+
+DOSTUPNOSTI:
+1. Globalni floating dugme (🤖 ikona dole desno) - dostupno svuda
+2. Profile Setup wizard - integrisano u profil setup proces
+3. Inline u components - kao kompaktna verzija
+
+KONTEKSTI (contexts) - svaki ima drugačiji system prompt:
+
+1. profile_setup
+   - Koristi se pri popunjavanju profila
+   - AI je mentor koji pomaže da popuniš profil
+   - Daje motivaciju za svaki field
+   - Postavlja follow-up pitanja
+   - Na kraju preporučuje poslove
+
+2. job_search
+   - Pomaže pri pretrage poslova
+   - Objašnjava šta kompanije traže
+   - Daje savete kako da se prijaviš
+   - Pomaže pri razumevanju plata
+
+3. employer
+   - Pomaže poslodavcima
+   - Saveti kako da napraviš dobar oglas za posao
+   - Kako da filtrirate kandidate
+   - Kako da spremiš intervju pitanja
+   - Kako da daš dobru ponudu
+
+4. general
+   - Sve ostalo
+   - Odgovara na pitanja o platformi
+   - Career advice
+   - Interview preparation
+   - FAQ
+
+KAKO RADI:
+1. Korisnik unese poruku u chat
+2. Frontend validira (max 5000 karaktera)
+3. Frontend proverava rate limit (20s timeout)
+4. Pošalje se na /.netlify/functions/ai-chat
+5. Netlify funkcija:
+   - Validira korisnika
+   - Proverava rate limit (30/min, 300/sat)
+   - Gradi conversation history (prethodne poruke)
+   - Bira odgovarajući system prompt
+   - Poziva AIML API sa retry logikom (3 pokušaja, exponential backoff)
+   - Ima 30s server timeout
+   - Vraća JSON odgovor
+6. Frontend prikazuje odgovor
+7. Oba poruke se čuvaju u chat_messages tabeli
+
+RATE LIMITING:
+- Frontend: 20s timeout per request
+- Server: 30 zahteva/minut, 300/sat
+- Vraća 429 status sa Retry-After header-om
+
+RETRY LOGIKA:
+- Max 3 pokušaja
+- Initial delay: 1000ms
+- Exponential backoff sa multiplier 2x
+- Max delay: 5000ms
+- Timeout: 30 sekundi
+
+ERROR HANDLING:
+- Vraća user-friendly poruke na srpskom
+- "AI servis nije dostupan - pokušajte kasnije"
+- "Previše zahteva - pokušajte ponovo za X sekundi"
+- "Poruka je preslužna (max 5000 karaktera)"
+
+=================================================================================
+6. FRONTNED - KOMPONENTE I SERVISI
+=================================================================================
+
+GLAVNE STRANICE:
+- Home.tsx - landing page sa feature-ima
+- Login.tsx - prijava
+- Signup.tsx - registracija (sa izbor role-a: candidate/employer)
+- AuthCallback.tsx - callback za email verifikaciju
+- ForgotPassword.tsx - zahtev za reset lozinke
+- ResetPassword.tsx - postavljanje nove lozinke
+- Dashboard.tsx - dashboard za kandidate
+- EmployerDashboard.tsx - dashboard za poslodavce
+- PostJob.tsx - pravljenje novog oglasa
+- Jobs.tsx - listanje poslova sa filterima
+- CheckEmail.tsx - provera mejla
+- Terms.tsx - uslovi korišćenja
+- Privacy.tsx - politika privatnosti
+
+KOMPONENTE:
+
+auth/:
+- AuthGuard.tsx - wrapper koji štiti rute (SAD DOZVOLJAVA javne rute)
+- Navbar.tsx - navigacijski bar
+- Footer.tsx - footer
+
+candidate/:
+- ProfileSetup.tsx - AI-vodiči wizard za popunjavanje profila
+- AIChat.tsx - chat komponenta sa AI-om (compact i full mode)
+- ApplicationsList.tsx - lista prijava korisnika
+- SavedJobs.tsx - sačuvani poslovi
+- RecommendedJobs.tsx - AI preporuke
+- ProfileQuickView.tsx - brz pregled profila
+- Notifications.tsx - obaveštenja
+
+employer/:
+- EmployerJobsList.tsx - lista oglasa poslodavca
+- CandidateSearch.tsx - pretraga kandidata
+- ApplicationReview.tsx - pregled aplikacija
+
+common/:
+- Background.tsx - animirani background sa ikonama
+- GlobalAIAssistant.tsx - globalni AI chat dugme
+- MaintenanceBanner.tsx - banner za održavanje
+- SuccessAnimation.tsx - animacija uspeha
+
+SERVISI:
+
+authService.ts:
+- signup(email, password, role) - registracija
+- login(email, password) - prijava
+- logout() - odjava
+- getCurrentUser() - uzmi trenutnog korisnika
+- createProfileIfMissing() - kreira profil ako ne postoji
+- markEmailConfirmedIfMissing() - označi email kao potvrđen
+- resetPassword(email) - zahtev za reset
+- updatePassword(newPassword) - nove lozinka
+- checkPasswordResetUsed() - da li je reset token korišćen
+- restoreSessionFromUrl() - restoruj sesiju iz URL tokena
+
+aiService.ts:
+- sendMessage(message, context, previousMessages) - pošalji poruku AI-u
+- saveChatMessage(userId, role, content, context) - sačuvaj poruku
+- getChatHistory(userId, context, limit) - učitaj istoriju
+- clearChatHistory(userId, context) - obriši istoriju
+- streamMessage() - generator za streaming (future feature)
+
+profileService.ts:
+- getProfileByUserId()
+- updateProfile()
+- uploadProfileImage()
+- Ostalo...
+
+jobService.ts:
+- getJobs() - sve poslove
+- getJobById()
+- createJob() - novi posao
+- updateJob()
+- deleteJob()
+- searchJobs() - pretraga sa filterima
+- Ostalo...
+
+sessionManager.ts:
+- Upravljanje encrypted sessions u localStorage
+- ENCRYPTION: AES-256-GCM sa PBKDF2 key derivation
+- saveAccount(), setCurrentSession(), clearAllSessions()
+
+rateLimitService.ts:
+- Provera rate limit-a
+- checkLimit(), getResetTime(), clearRateLimit()
+- Stanja: signup, login, resetPassword, updatePassword
+
+encryptionService.ts:
+- AES-256-GCM encryption/decryption
+- Koristi SubtleCrypto API
+
+deviceService.ts:
+- Device fingerprinting
+- SHA-256 hashing
+- Detektuje ako se pristupa sa drugog uređaja
+
+=================================================================================
+7. TRENUTNE MOGUĆNOSTI & OGRANIČENJA
+=================================================================================
+
+IMPLEMENTIRANO ✅:
+✅ User authentication (signup/login/logout)
+✅ Email verification flow
+✅ Password reset sa email link-om
+✅ Role-based access (candidate/employer)
+✅ Profile management (candidates i employers)
+✅ Job posting (employers)
+✅ Job search sa filtrima (candidates)
+✅ Save jobs (candidates)
+✅ Application tracking
+✅ AI chat assistance (4 konteksta)
+✅ Chat history persistence
+✅ Rate limiting
+✅ Security (RLS, JWT, encryption)
+✅ Responsive design (desktop + mobile)
+
+PLANOVE ZA BUDUĆNOST 🚀:
+🚀 Advanced AI matching algoritam (ML model za perfect match)
+🚀 Video intervjuima (Zoom integracija)
+🚀 Payment integration (Stripe za premium features)
+🚀 Mobile app (React Native)
+🚀 Real-time notifications (WebSocket)
+🚀 Company profiles sa glasanjima (reviews & ratings)
+🚀 Candidate recommendations for employers
+🚀 Interview scheduling tool
+🚀 Contract management system
+🚀 Multi-language support
+🚀 Analytics dashboard (za employers)
+🚀 Advanced search filters
+🚀 Salary benchmarking tool
+
+=================================================================================
+8. DEPLOYMENT STATUS
+=================================================================================
+
+FRONTEND:
+- Build Status: ✅ 1433 modules, 0 errors, 6.79s
+- TypeScript: ✅ All strict checks pass
+- Production URL: https://peppy-concha-98ab23.netlify.app
+- Deployment: Netlify (automatic sa git push)
+
+BACKEND:
+- Database: ✅ Supabase PostgreSQL live
+- Functions: ✅ Netlify ai-chat deployed
+- Migrations: ✅ 9 migrations applied
+
+SVESVEČNE OPCIJE NA NETLIFY:
+- Build command: npm ci && npm run build
+- Publish directory: frontend/dist
+- Functions directory: netlify/functions
+- Environment variables: VITE_SITE_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+
+=================================================================================
+9. ČESTE GREŠKE I REŠENJA
+=================================================================================
+
+Q: "AuthCallback me prosleđuje na dashboard umesto verifikacije?"
+A: Popravljen! AuthCallback sada:
+   1. Detektuje tip flow-a (confirmation ili regular login)
+   2. Proverava role korisnika iz users tabele
+   3. Rutira na /dashboard za candidate ili /employer-dashboard za employer
+   4. Prikazuje "Uspešna potvrda!" poruku
+   5. AUTO-REDIRECT nakon 1.4-2 sekunde
+
+Q: "Signup me automatski preusmeri na dashboard?"
+A: Ispravljeno! Sada:
+   1. Signup ide na /check-email
+   2. Korisnik mora potvrditi email iz mejl-a
+   3. Nakon klika na link → /auth/callback
+   4. /auth/callback vodi na odgovarajući dashboard
+
+Q: "Šta je sa AuthGuard koji štiti sve rute?"
+A: Popravljen! AuthGuard sada dozvoljava PUBLIC_ROUTES:
+   - '/', '/login', '/signup', '/forgot-password'
+   - '/reset-password', '/check-email', '/auth/callback'
+   - '/terms', '/privacy', '/jobs'
+   Samo /dashboard i /employer-dashboard su zaštićene
+
+Q: "Koja je razlika između EmployerDashboard i Dashboard?"
+A: 
+   - Dashboard.tsx → samo za candidate-e (job search, recommendations)
+   - EmployerDashboard.tsx → samo za employer-e (job posting, management)
+   - AuthCallback proverava role i rutira na pravi dashboard
+
+=================================================================================
+10. INFORMACIJE ZA AI TRAINING
+=================================================================================
+
+AI ASISTENT TREBA DA ZNA:
+
+1. OSNOVNO O PLATFORMI:
+   - Koja je svrha NeonConnect-a (matching kandidata i poslodavaca)
+   - Koje su glavne karakteristike
+   - Kako se koristi (basic flow)
+
+2. KANDIDATIMA TREBALO JE:
+   - Kako da se registruješ (signup kao candidate)
+   - Kako da popuniš profil (Profile Setup wizard sa AI)
+   - Kako da pretraživaš poslove (Jobs stranica sa filterima)
+   - Kako da sačuvaš posao (heart ikona)
+   - Kako da se prijaviš za posao (Apply button)
+   - Kako da vidiš svoje prijave (Dashboard → Applications tab)
+   - Kako AI može da pomogne
+
+3. POSLODAVCIMA TREBALO JE:
+   - Kako da se registruješ (signup kao employer)
+   - Kako da kreiram profil kompanije
+   - Kako da postavam novi oglas (Post Job stranica)
+   - Kako da upravljam oglasima (EmployerDashboard)
+   - Kako da pregledam aplikacije
+   - Kako da kontaktiram kandidate
+   - Kako AI može da pomogne
+
+4. TEHNIČKI DETALJI:
+   - Koji su konteksti dostupni (profile_setup, job_search, employer, general)
+   - Kako funkcija rate limiting-a
+   - Koje su error poruke
+   - Kako da se čuva history
+
+5. SIGURNOST:
+   - RLS - svako vidi samo svoje
+   - Encryption - sve je šifrovano
+   - Rate limiting - zaštita od abuse-a
+
+=================================================================================
+11. QUICK REFERENCE ZA AI
+=================================================================================
+
+CANDIDATE FLOW:
+1. /signup?role=candidate → Unesi email/password
+2. Potvrdi email iz link-a
+3. /auth/callback → Rutira na /dashboard
+4. Popuni profil (AI wizard može pomoci)
+5. Kreni sa /jobs - pretraži poslove
+6. Sačuvaj sa ❤️ ikonom
+7. Aplikuj sa "Apply" button-om
+8. Vidi status u Applications tab-u
+
+EMPLOYER FLOW:
+1. /signup?role=employer → Unesi email/password
+2. Potvrdi email iz link-a
+3. /auth/callback → Rutira na /employer-dashboard
+4. Popuni company profil
+5. Kreni sa /post-job - pravi novi oglas
+6. Upravljaj oglasima u /employer-dashboard
+7. Pregledam aplikacije i kontaktiram kandidate
+
+AI CHAT DOSTUPAN:
+- 🤖 Globalni button dole desno (dostupan svuda)
+- U Profile Setup (inline)
+- Contextualni odgovori
+
+KONTEKSTI I TEME:
+- profile_setup → Pomoć pri popunjavanju profila
+- job_search → Pomoć pri pretrazi i aplikovanju
+- employer → Pomoć poslodavcima
+- general → Sve ostalo (FAQ, career advice, itd)
+
+=================================================================================
+EOF - NEONCONNECT AI TRAINING DOKUMENTACIJA
+=================================================================================
+"""
