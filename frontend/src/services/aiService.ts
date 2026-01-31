@@ -321,4 +321,7 @@ export const aiService = {
       console.error('❌ [AI SERVICE] Error clearing chat history:', err)
       throw err
     }
-  },}
+  },
+}
+
+export default aiService
