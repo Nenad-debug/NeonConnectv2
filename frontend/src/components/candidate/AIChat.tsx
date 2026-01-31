@@ -352,7 +352,7 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-3">
               <p className="text-5xl">💼</p>
-              <p className="text-gray-800 font-semibold text-lg">NeonConnect AI Asistent</p>
+              <p className="text-gray-800 font-semibold text-lg">Aurora AI</p>
               <p className="text-sm text-gray-500">Kako mogu da vam pomognem?</p>
             </div>
           </div>

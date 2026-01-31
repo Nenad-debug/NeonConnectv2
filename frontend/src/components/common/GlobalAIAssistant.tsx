@@ -157,9 +157,9 @@ export default function GlobalAIAssistant() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-gray-900">
-                      NeonConnect Assistant
+                      Aurora AI
                     </h2>
-                    <p className="text-xs text-gray-500">Asistent za karijeru i poslove</p>
+                    <p className="text-xs text-gray-500">Vaš pametni karijen savjetnik</p>
                   </div>
                 </div>
                 <button
