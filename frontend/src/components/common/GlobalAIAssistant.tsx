@@ -47,9 +47,7 @@ export default function GlobalAIAssistant() {
       setContext('profile_setup')
     } else if (pathname.includes('/jobs') || pathname.includes('/job')) {
       setContext('job_search')
-    } else if (pathname.includes('/post') || pathname.includes('/employer')) {
-      setContext('employer')
-    } else if (pathname.includes('/dashboard')) {
+    } else if (pathname.includes('/post') || pathname.includes('/employer-dashboard')) {
       setContext('employer')
     } else {
       setContext('general')
@@ -69,7 +67,44 @@ export default function GlobalAIAssistant() {
     }
   }, [isOpen])
 
-  if (!userId) return null
+  if (!userId) {
+    // Still show button but with limited functionality for non-logged-in users
+    return (
+      <>
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+          @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(147, 51, 234, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(147, 51, 234, 0.5); }
+          }
+          @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+          }
+          .ai-button-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          .ai-button-glow {
+            animation: glow 2s ease-in-out infinite;
+          }
+          .pulse-ring {
+            animation: pulse-ring 2s ease-out infinite;
+          }
+        `}</style>
+
+        <button
+          disabled
+          className="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-2xl opacity-50 cursor-not-allowed flex items-center justify-center border-2 border-blue-300/50 ai-button-float"
+          title="Prijavi se da koristiš AI asistenta"
+        >
+          <Sparkles className="w-7 h-7" />
+        </button>
+      </>
+    )
+  }
 
   return (
     <>
