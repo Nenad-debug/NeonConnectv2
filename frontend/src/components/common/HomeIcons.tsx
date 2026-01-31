@@ -1,5 +1,3 @@
-import React from 'react'
-
 const iconClass = 'flex-shrink-0'
 
 function Grad({ id }: { id: string }) {
