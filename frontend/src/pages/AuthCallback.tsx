@@ -2,10 +2,25 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react'
 import { authService } from '../services/authService'
+import { supabase } from '../services/supabaseClient'
 
 export default function AuthCallback() {
   const [message, setMessage] = useState('Verifikujem...')
   const navigate = useNavigate()
+
+  // Helper to get user's role
+  const getUserRole = async (userId: string): Promise<'candidate' | 'employer'> => {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single()
+      return (data?.role as 'candidate' | 'employer') || 'candidate'
+    } catch {
+      return 'candidate'
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -42,23 +57,27 @@ export default function AuthCallback() {
         if (!mounted) return
 
         if (user) {
+          // Get user's role to determine redirect
+          const role = await getUserRole(user.id)
+          const redirectPath = role === 'employer' ? '/employer-dashboard' : '/dashboard'
+
           // Try to mark the email as confirmed; returns true if we just set it
           const newlyConfirmed = await authService.markEmailConfirmedIfMissing(user).catch(() => false)
 
           if (isConfirmationFlow) {
             if (newlyConfirmed) {
               setMessage('Uspešna potvrda! Ulogovan si, preusmeravam...')
-              setTimeout(() => navigate('/dashboard'), 1400)
+              setTimeout(() => navigate(redirectPath), 1400)
             } else {
               // Email already confirmed previously
               setMessage('Nalog je već verifikovan! 🎉 Nema potrebe da se ponovo potvrdi. Preusmeravam...')
-              setTimeout(() => navigate('/dashboard'), 2000)
+              setTimeout(() => navigate(redirectPath), 2000)
             }
           } else {
             // Normal login flow
             await authService.createProfileIfMissing(user)
             setMessage('Uspešna prijava, preusmeravam...')
-            setTimeout(() => navigate('/dashboard'), 1400)
+            setTimeout(() => navigate(redirectPath), 1400)
           }
         } else if (isConfirmationFlow) {
           // No session and no user but looks like a confirmation link — likely expired/used

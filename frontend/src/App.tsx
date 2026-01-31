@@ -10,6 +10,7 @@ const Home = lazy(() => import('./pages/Home'))
 const Login = lazy(() => import('./pages/Login'))
 const Signup = lazy(() => import('./pages/Signup'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const EmployerDashboard = lazy(() => import('./pages/EmployerDashboard'))
 const PostJob = lazy(() => import('./pages/PostJob'))
 const CheckEmail = lazy(() => import('./pages/CheckEmail'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
@@ -43,6 +44,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/post-job" element={<PostJob />} />
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/check-email" element={<CheckEmail />} />
