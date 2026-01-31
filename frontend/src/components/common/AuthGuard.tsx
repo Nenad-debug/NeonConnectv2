@@ -1,27 +1,46 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../services/supabaseClient'
 
 interface AuthGuardProps {
   children: React.ReactNode
 }
 
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/check-email',
+  '/auth/callback',
+  '/terms',
+  '/privacy',
+  '/jobs',
+]
+
 export default function AuthGuard({ children }: AuthGuardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         
-        if (!user) {
-          // User is not authenticated
-          navigate('/', { replace: true })
+        // If user is not authenticated and route is protected, redirect to login
+        if (!user && !PUBLIC_ROUTES.includes(location.pathname)) {
+          console.log('⚠️ [AUTH GUARD] Protecting route, redirecting to login')
+          navigate('/login', { replace: true })
         }
       } catch (error) {
         console.error('Auth check error:', error)
-        navigate('/', { replace: true })
+        // Don't redirect on error if public route
+        if (!PUBLIC_ROUTES.includes(location.pathname)) {
+          navigate('/login', { replace: true })
+        }
       } finally {
         setIsLoading(false)
       }
@@ -32,14 +51,17 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
-        navigate('/', { replace: true })
+        // Only redirect if on protected route
+        if (!PUBLIC_ROUTES.includes(location.pathname)) {
+          navigate('/login', { replace: true })
+        }
       }
     })
 
     return () => {
       subscription?.unsubscribe()
     }
-  }, [navigate])
+  }, [navigate, location.pathname])
 
   if (isLoading) {
     return (
