@@ -27,18 +27,21 @@ export default function SocialProof() {
   }, [])
 
   return (
-    <div className="flex items-center gap-6 pt-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-      <div className="flex -space-x-3">
+    <div className="flex items-center gap-4 text-sm text-slate-300">
+      <div className="flex -space-x-2">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-slate-900 flex items-center justify-center text-sm font-bold">
+          <div
+            key={i}
+            className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-medium text-slate-300"
+          >
             {i + 1}
           </div>
         ))}
       </div>
-      <p className="text-sm text-slate-300">
-        <span className={`font-semibold text-white transition-opacity duration-300 ${isLoading ? 'opacity-75' : 'opacity-100'}`}>
+      <p>
+        <span className={`font-semibold text-white transition-opacity ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
           {activeUsers > 0 ? activeUsers + '+' : '0'}
-        </span> korisnika koristi NeonConnect
+        </span> koristi NeonConnect
       </p>
     </div>
   )

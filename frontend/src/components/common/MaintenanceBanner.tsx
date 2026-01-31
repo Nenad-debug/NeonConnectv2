@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { X, Shield, Wrench, CheckCircle2, AlertTriangle, BadgeCheck } from 'lucide-react'
+import { X, BadgeCheck, Shield } from 'lucide-react'
 
 const STORAGE_KEY = 'neon_maintenance_popup_seen'
 const HIDE_FOR_MS = 24 * 60 * 60 * 1000 // 24h
+// Slika: frontend/public/ — imena: developer-avatar.jpg, developer-avatar.png ili developer-avatar.jpg.png
+const AVATAR_CANDIDATES = ['/developer-avatar.jpg', '/developer-avatar.png', '/developer-avatar.jpg.png']
 
 function getShouldShow(): boolean {
   if (typeof window === 'undefined') return true
@@ -26,6 +28,12 @@ function setDismissed(): void {
 export default function MaintenanceBanner() {
   const [isVisible, setIsVisible] = useState(false)
   const [isEntered, setIsEntered] = useState(false)
+  const [avatarIndex, setAvatarIndex] = useState(0)
+  const avatarSrc = AVATAR_CANDIDATES[avatarIndex] ?? AVATAR_CANDIDATES[0]
+  const avatarFailed = avatarIndex >= AVATAR_CANDIDATES.length
+  const handleAvatarError = () => {
+    setAvatarIndex((i) => (i + 1 < AVATAR_CANDIDATES.length ? i + 1 : AVATAR_CANDIDATES.length))
+  }
 
   useEffect(() => {
     if (!getShouldShow()) return
@@ -49,42 +57,12 @@ export default function MaintenanceBanner() {
   return (
     <React.Fragment>
       <style>{`
-        @keyframes maintenance-backdrop-in {
+        @keyframes maintenance-fade {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes maintenance-modal-in {
-          from {
-            opacity: 0;
-            transform: scale(0.92) translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        @keyframes maintenance-shine {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .maintenance-backdrop {
-          animation: maintenance-backdrop-in 0.35s ease-out forwards;
-        }
-        .maintenance-modal-enter {
-          animation: maintenance-modal-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        .maintenance-shine-border {
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(59, 130, 246, 0.3),
-            rgba(168, 85, 247, 0.4),
-            rgba(59, 130, 246, 0.3),
-            transparent
-          );
-          background-size: 200% 100%;
-          animation: maintenance-shine 3s ease-in-out infinite;
-        }
+        .maintenance-backdrop { animation: maintenance-fade 0.25s ease-out forwards; }
+        .maintenance-modal-enter { animation: maintenance-fade 0.3s ease-out forwards; }
       `}</style>
 
       <div
@@ -93,124 +71,108 @@ export default function MaintenanceBanner() {
         aria-modal="true"
         aria-labelledby="maintenance-title"
       >
-        {/* Backdrop — no blur on mobile for perf */}
         <div
-          className={`maintenance-backdrop absolute inset-0 bg-black/75 md:bg-black/70 md:backdrop-blur-sm transition-opacity duration-300 ${isEntered ? 'opacity-100' : 'opacity-0'}`}
+          className={`maintenance-backdrop absolute inset-0 bg-slate-900/80 transition-opacity duration-200 ${isEntered ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => handleClose(false)}
           aria-hidden="true"
         />
 
-        {/* Modal — content in flow so modal has height; shine as background layer */}
         <div
-          className={`maintenance-modal-enter relative z-10 w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl transition-all duration-300 ${
+          className={`maintenance-modal-enter relative z-10 w-full max-w-xl overflow-hidden rounded-xl bg-slate-900 border border-slate-700/50 shadow-xl transition-opacity duration-200 ${
             isEntered ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          {/* Shine border (decorative, behind content) */}
-          <div className="maintenance-shine-border absolute inset-0 rounded-2xl p-[1px] z-0" aria-hidden="true">
-            <div className="absolute inset-[1px] rounded-[14px] bg-slate-900/95" />
+          {/* Header — minimal */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center rounded-md bg-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-300 ring-1 ring-amber-500/30">
+                Maintenance
+              </span>
+              <span className="text-sm text-slate-400">u toku</span>
+            </div>
+            <button
+              onClick={() => handleClose(false)}
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+              title="Zatvori"
+              aria-label="Zatvori"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          {/* Content in flow so modal gets height and is visible */}
-          <div className="relative z-10 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-900/98 border border-slate-700/50 overflow-hidden">
-            {/* Header */}
-            <div className="relative px-6 pt-6 pb-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/30">
-                    <Wrench className="h-6 w-6 text-amber-400" />
-                  </div>
-                  <div>
-                    <h1 id="maintenance-title" className="text-xl font-bold text-white">
-                      Maintenance in Progress
-                    </h1>
-                    <p className="text-sm text-slate-400 mt-0.5">
-                      Poboljšavamo NeonConnect
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleClose(false)}
-                  className="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                  title="Zatvori"
+
+          {/* Poruka od developera — kao stvarna poruka */}
+          <div className="px-6 py-5">
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-4">
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Zdravo,
+              </p>
+              <p className="text-slate-200 text-sm leading-relaxed mt-2">
+                Trenutno radimo na sigurnosnim ažuriranjima i optimizaciji platforme. U narednih nekoliko dana moguće su kraće prekide u radu ili sporiji odziv pojedinih stranica. Radove ćemo držati što kraće.
+              </p>
+              <p className="text-slate-300 text-sm leading-relaxed mt-3">
+                Možete normalno koristiti sajt — pregled poslova, prijave i izmenu profila. Ako nešto ne radi kako treba, osvežite stranicu ili nas kontaktirajte.
+              </p>
+              <p className="text-slate-300 text-sm mt-4">
+                Hvala na strpljenju,
+              </p>
+            </div>
+
+            {/* Developer — slika + ime + verifikacije */}
+            <div className="mt-4 flex items-center gap-4">
+              <div className="relative flex-shrink-0 h-14 w-14">
+                {!avatarFailed ? (
+                  <img
+                    key={avatarSrc}
+                    src={avatarSrc}
+                    alt="Nenad — Developer"
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-slate-600"
+                    onError={handleAvatarError}
+                  />
+                ) : null}
+                <div
+                  className={`h-14 w-14 rounded-full bg-slate-700 flex items-center justify-center text-white text-xl font-semibold ring-2 ring-slate-600 ${!avatarFailed ? 'hidden' : ''}`}
+                  aria-hidden={!avatarFailed}
                 >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Message from developer */}
-            <div className="px-6 pb-4 space-y-4">
-              <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 p-4">
-                <p className="text-slate-300 text-sm leading-relaxed">
-                  <strong className="text-slate-200">Na čemu trenutno radimo:</strong>
-                  <br />
-                  Sigurnosna ažuriranja, optimizacija performansi i nove funkcije (AI chat, preporuke poslova). Neke stranice mogu biti sporije ili kratko nedostupne.
-                </p>
-                <p className="text-slate-400 text-sm mt-3">
-                  <strong className="text-slate-300">Očekivano:</strong> Radovi bi trebalo da se završe u narednih nekoliko dana. Poremećaji će biti kratki.
-                </p>
-              </div>
-
-              {/* Do's and Don'ts — simple for users */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-2">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                    Možete slobodno
-                  </div>
-                  <ul className="text-slate-400 text-xs space-y-1">
-                    <li>• Pregled poslova i prijave</li>
-                    <li>• Izmena profila</li>
-                    <li>• Pretraga i filteri</li>
-                    <li>• Prijava i registracija</li>
-                  </ul>
-                </div>
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
-                  <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-2">
-                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                    Bolje izbegavajte
-                  </div>
-                  <ul className="text-slate-400 text-xs space-y-1">
-                    <li>• Duge sesije bez čuvanja</li>
-                    <li>• Masovne prijave u vršno vreme</li>
-                    <li>• Samo AI chat ako je spor</li>
-                  </ul>
+                  N
                 </div>
               </div>
-            </div>
-
-            {/* Developer signature + verification */}
-            <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-slate-300 font-medium">Nenad</span>
-                <span className="text-slate-500">·</span>
-                <span className="inline-flex items-center gap-1.5 text-slate-400 text-sm">
-                  <span>Neon Connect</span>
-                  <BadgeCheck className="h-4 w-4 text-blue-400" aria-hidden />
-                  <span className="text-xs text-blue-400/90">Verifikovan</span>
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300 border border-indigo-500/30">
-                  <Shield className="h-3.5 w-3.5" />
-                  Developer
-                </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-white">Nenad</span>
+                  <span className="inline-flex items-center text-slate-400" title="Verifikovan">
+                    <BadgeCheck className="h-4 w-4 text-blue-400" aria-hidden />
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded bg-slate-700 px-1.5 py-0.5 text-xs font-medium text-slate-300">
+                    <Shield className="h-3.5 w-3.5" />
+                    Developer
+                  </span>
+                </div>
+                <p className="text-slate-500 text-xs mt-0.5">
+                  Member since{' '}
+                  {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('sr-Latn-RS', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="px-6 pb-6 pt-2 flex flex-col sm:flex-row gap-2 justify-end">
-              <button
-                onClick={() => handleClose(true)}
-                className="order-2 sm:order-1 px-4 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors text-sm font-medium"
-              >
-                Ne prikazuj danas ponovo
-              </button>
-              <button
-                onClick={() => handleClose(false)}
-                className="order-1 sm:order-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all text-sm font-medium shadow-lg shadow-purple-500/20"
-              >
-                U redu
-              </button>
-            </div>
+          {/* Actions */}
+          <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30 flex flex-col-reverse sm:flex-row gap-2 justify-end">
+            <button
+              onClick={() => handleClose(true)}
+              className="px-4 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+            >
+              Ne prikazuj danas
+            </button>
+            <button
+              onClick={() => handleClose(false)}
+              className="px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg transition-colors shadow-lg shadow-purple-500/20"
+            >
+              Razumem
+            </button>
           </div>
         </div>
       </div>

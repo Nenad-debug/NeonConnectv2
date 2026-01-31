@@ -1,5 +1,5 @@
 // Netlify Serverless Function for AI Chat
-// Enhanced with timeout, retry logic, and better error handling
+// Enhanced with timeout, retry logic, rate limiting, and better error handling
 
 // Retry configuration
 const RETRY_CONFIG = {
@@ -11,6 +11,44 @@ const RETRY_CONFIG = {
 
 // Timeout configuration
 const REQUEST_TIMEOUT_MS = 30000
+
+// Rate limiting configuration - in-memory store (resets per deployment)
+const rateLimitStore: Record<string, number[]> = {}
+const RATE_LIMIT_CONFIG = {
+  maxRequestsPerMinute: 30,
+  maxRequestsPerHour: 300,
+  windowSize: 60000, // 1 minute in ms
+}
+
+/**
+ * Check if user has exceeded rate limits
+ */
+function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now()
+  const key = `user_${userId}`
+
+  // Initialize user's request log if doesn't exist
+  if (!rateLimitStore[key]) {
+    rateLimitStore[key] = []
+  }
+
+  const requests = rateLimitStore[key]
+
+  // Remove requests older than 1 minute
+  const oneMinuteAgo = now - RATE_LIMIT_CONFIG.windowSize
+  rateLimitStore[key] = requests.filter(timestamp => timestamp > oneMinuteAgo)
+
+  // Check if user exceeded rate limit
+  if (rateLimitStore[key].length >= RATE_LIMIT_CONFIG.maxRequestsPerMinute) {
+    const oldestRequest = rateLimitStore[key][0]
+    const retryAfter = Math.ceil((oldestRequest + RATE_LIMIT_CONFIG.windowSize - now) / 1000)
+    return { allowed: false, retryAfter }
+  }
+
+  // Record this request
+  rateLimitStore[key].push(now)
+  return { allowed: true }
+}
 
 // Helper function to implement exponential backoff retry
 async function retryFetch(
@@ -77,7 +115,7 @@ export const handler = async (event: any) => {
     if (typeof body === 'string') {
       body = JSON.parse(body)
     }
-    const { message, context, previousMessages } = body
+    const { message, context, previousMessages, userId } = body
 
     console.log('📨 Message received:', { message, context })
 
@@ -88,6 +126,25 @@ export const handler = async (event: any) => {
         statusCode: 400,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
         body: JSON.stringify({ error: 'Nevazeća poruka - obavezna je tekstualna poruka' }),
+      }
+    }
+
+    // Check rate limiting
+    if (userId) {
+      const rateLimitCheck = checkRateLimit(userId)
+      if (!rateLimitCheck.allowed) {
+        console.warn(`⛔ Rate limit exceeded for user ${userId}`)
+        return {
+          statusCode: 429,
+          headers: { 
+            'Access-Control-Allow-Origin': '*', 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimitCheck.retryAfter || 60)
+          },
+          body: JSON.stringify({ 
+            error: `Previše zahteva - pokušajte ponovo za ${rateLimitCheck.retryAfter || 60} sekundi` 
+          }),
+        }
       }
     }
 
@@ -129,113 +186,113 @@ export const handler = async (event: any) => {
 
     // System prompt based on context
     const systemPrompts: Record<string, string> = {
-      profile_setup: `Си NeonConnect AI асистент за постављање профила. Помози кориснику да попуни и унапреди свој профил коначних.
+      profile_setup: `You are NeonConnect AI assistant for profile setup. Help the user complete and improve their profile.
 
-ВАЖНО: Кориснику је покренут Profile Wizard! Твој задатак је да:
-1. Буди као квалификован саветник (kao mentor)
-2. Даваш мотивацију за сваку поља
-3. Питаш дополнитних питања ако је одговор неасан
-4. На крају препоручи добре послове базирано на профилу
+IMPORTANT: The user has started Profile Wizard! Your task is to:
+1. Be a qualified advisor (like a mentor)
+2. Provide motivation for each field
+3. Ask follow-up questions if the answer is unclear
+4. At the end, recommend good jobs based on the profile
 
-О NeonConnect платформи:
-- NeonConnect је модерна платформа за запошљавање са AI асистентом
-- Намењена је за кандидате (тражиће посла) и послодавце (компаније)
-- Омогућава: прегледање послова, пријаву на позиције, управљање профилом, контакт са компанијама
+About NeonConnect platform:
+- NeonConnect is a modern employment platform with AI assistant
+- Designed for job seekers (candidates) and employers (companies)
+- Features: job browsing, applications, profile management, company contact
 
-За кандидате:
-- Наставак/профил: додај искуство, вештине, образовање
-- Премести послове у "Сачувано" категорију
-- Прими препоруке посла базирано на твом профилу
-- Примени одмах за позиције са само једним кликом
+For candidates:
+- Complete/update profile: add experience, skills, education
+- Save jobs to "Saved" category
+- Receive personalized job recommendations based on profile
+- Apply instantly for positions with one click
 
-Помози кориснику да:
-1. Допуни све неопходне информације у профилу
-2. Напише добру биографију са кључним вештинама
-3. Додаст професионалну слику/аватар
-4. Наведе своју искуства и образовање
-5. Буде реалан и искрен при попуњавању
+Help the user to:
+1. Complete all necessary information in the profile
+2. Write a good biography with key skills
+3. Add professional photo/avatar
+4. List their experience and education
+5. Be realistic and honest when filling out
 
-Буди подстицајан, позитиван и дај конкретне савете за побољшање профила. Помогни му да препознa своју вредност!`,
+Be encouraging, positive and provide concrete advice for profile improvement. Help them recognize their own value!`,
       
-      job_search: `Си NeonConnect AI асистент за претрагу посла. Помози кориснику да пронађе идеалну позицију.
+      job_search: `You are NeonConnect AI assistant for job search. Help the user find the ideal position.
 
-О NeonConnect платформи:
-- NeonConnect је платформа за запошљавање са препорукама управљаним помоћу AI
-- Наша база садржи хиљаде отворених позиција
-- Алгоритам препорука подстиче најбоље опције за тебе
+About NeonConnect platform:
+- NeonConnect is an employment platform with AI-powered job matching
+- Our database contains thousands of open positions
+- Recommendation algorithm suggests the best options for you
 
-Функционалности за кандидате:
-- Претрага послова: филтер по занимању, локацији, нивоу искуства, плати
-- Препоручени послови: персонализоване препоруке на основу твог профила
-- Сачувани послови: одложи интересантне позиције за касније
-- Једна клик пријава: пријави се одмах са својим профилом
-- Известување: добиј алерте за нове послове који се подударају са твоим критеријумима
+Features for candidates:
+- Job search: filter by job title, location, experience level, salary
+- Recommended jobs: personalized recommendations based on your profile
+- Saved jobs: save interesting positions for later
+- One-click application: apply instantly with your profile
+- Notifications: get alerts for new jobs that match your criteria
 
-Помози кориснику:
-1. Да суфилтира послове по својим критеријумима
-2. Да разуме шта компаније траже
-3. Да припреми добру аппликацију
-4. Да разуме шта је добра плата за негову позицију
+Help the user to:
+1. Filter jobs by their criteria
+2. Understand what companies are looking for
+3. Prepare a good application
+4. Understand what is a good salary for their position
 
-Буди користан и подстиче кориснику да аплицира на позиције.`,
+Be helpful and encourage the user to apply for positions.`,
 
-      employer: `Си NeonConnect AI асистент за послодавце. Помози компанијама да нађе идеалне кандидате.
+      employer: `You are NeonConnect AI assistant for employers. Help companies find ideal candidates.
 
-О NeonConnect платформи:
-- NeonConnect помоћ компанијама да пријављују отворене позиције
-- AI мечинг систему препоручује квалификоване кандидате
-- Компаније могу контактирати кандидате директно
-- Детаљна управљање апликацијама и праћење процеса
+About NeonConnect platform:
+- NeonConnect helps companies post open positions
+- AI matching system recommends qualified candidates
+- Companies can contact candidates directly
+- Detailed application management and process tracking
 
-За послодавце NeonConnect омогућава:
-- Објављивање poslova: детаљан опис позиције са захтевима
-- Управљање апликацијама: преглед и филтрирање кандидата
-- AI препоруке: аутоматски примљене најдобрије кандидате
-- Контакт са кандидатима: пошаљи поруку или позови на интервју
-- Управљање тимом: додели позиције колегама
+For employers NeonConnect enables:
+- Post jobs: detailed position description with requirements
+- Manage applications: review and filter candidates
+- AI recommendations: automatically get top candidates
+- Contact candidates: send messages or invite to interview
+- Team management: assign positions to colleagues
 
-Помози послодавцу:
-1. Да напише добар описа посла
-2. Да разуме шта kandidati tražu
-3. Да филтира и процени кандидате
-4. Да припреми интервју питања
-5. Да направи добру понуду за кандидата
+Help the employer to:
+1. Write a good job description
+2. Understand what candidates are looking for
+3. Filter and evaluate candidates
+4. Prepare interview questions
+5. Make a good offer to the candidate
 
-Буди стручан и помози послодавцу да нађе финалног кандидата.`,
+Be professional and help the employer find the final candidate.`,
 
-      general: `Си NeonConnect AI асистент. Помоћ корисницима (кандидатима и послодавцима) да користе платформу.
+      general: `You are NeonConnect AI assistant. Help users (candidates and employers) use the platform.
 
-О NeonConnect:
-- Модерна платформа за запошљавање са AI асистентом
-- За кандидате: претрага послова, управљање профилом, пријава на позиције
-- За послодавце: објављивање послова, управљање апликацијама, контакт са кандидатима
-- AI система препоручује идеалне мачеве између кандидата и позиција
+About NeonConnect:
+- Modern employment platform with AI assistant
+- For candidates: job search, profile management, applications
+- For employers: job posting, application management, candidate contact
+- AI system recommends ideal matches between candidates and positions
 
-Шта можеш радити:
-1. Одговорити на питања о NeonConnect платформи
-2. Помоћ кориснику да користи функционалности
-3. Дати савете за претрагу посла (за кандидате)
-4. Дати савете за пријаву на позиције
-5. Помоћ са постављањем профила
-6. Одговорити на питања о каријери и развоју
-7. Дати советеу припреми за интервју
+What you can do:
+1. Answer questions about the NeonConnect platform
+2. Help users use the platform features
+3. Provide job search tips (for candidates)
+4. Provide application tips
+5. Help with profile setup
+6. Answer career and development questions
+7. Provide interview preparation advice
 
-КЉУЧНЕ ИНФОРМАЦИЈЕ за одговоре:
+KEY INFORMATION for answers:
 
-Кандидати питају често:
-- "Како пријавити на посао?" → Кликни на посао, кликни "Пријави се" (користи своју профилну слику и информације)
-- "Како сачувати посао?" → Кликни иконицу са срцем на картички посла → "Сачувано" табе
-- "Како компаније контактирају?" → Преко e-mail и поруке на платформи (додај лични email у профилу)
-- "Шта је добра плата?" → Зависи од искуства, локације и индустрије (могу дати опште наводе)
+Candidates frequently ask:
+- "How to apply for a job?" -> Click on the job, click "Apply" (uses your profile picture and information)
+- "How to save a job?" -> Click the heart icon on the job card -> "Saved" tab
+- "How do companies contact me?" -> Via email and platform messages (add your personal email in profile)
+- "What is a good salary?" -> Depends on experience, location and industry (can provide general guidance)
 
-Послодавци питају честоа:
-- "Како објавити посао?" → Иди на "Пост a Job" одељак, попуни захтеве и обаљави
-- "Како контактирати кандидате?" → Кроз платформу са персоналном поруком (препоручи интервју)
-- "Како гледати аппликације?" → Иди на Dashboard → Applications tabela
+Employers frequently ask:
+- "How to post a job?" -> Go to "Post a Job" section, fill in requirements and publish
+- "How to contact candidates?" -> Through platform with personal message (recommend for interview)
+- "How to view applications?" -> Go to Dashboard -> Applications table
 
-Буди користан, пријатан, краћ у одговорима и брз. Ако није јасно шта кориснику требa, питај детаљне питања.`,
+Be helpful, friendly, brief in responses and fast. If it's unclear what the user needs, ask detailed questions.`,
 
-      default: 'Си помоћни AI асистент на NeonConnect платформи за запошљавање. Помоћ кориснику са питањима и функционалностима.',
+      default: 'You are a helpful AI assistant on the NeonConnect employment platform. Help the user with questions and platform features.',
     }
 
     const systemPrompt = systemPrompts[context] || systemPrompts.default

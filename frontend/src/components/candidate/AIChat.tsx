@@ -227,9 +227,9 @@ Sada mogu da ti preporučim poslove koji se poklapaju sa tvojim profilom! 🎯`
       // Add to UI immediately
       setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
 
-      // Get AI response
+      // Get AI response with userId for rate limiting
       setLoading(true)
-      const aiResponse = await aiService.sendMessage(userMessage, context, messages)
+      const aiResponse = await aiService.sendMessage(userMessage, context, messages, userId)
 
       // Save AI response (non-blocking)
       aiService.saveChatMessage(userId, 'assistant', aiResponse, context).catch((err) =>

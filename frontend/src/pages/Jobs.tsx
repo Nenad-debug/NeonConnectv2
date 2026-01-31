@@ -1,56 +1,65 @@
 import { Link } from 'react-router-dom'
-import { Search, MapPin, Briefcase, ArrowRight } from 'lucide-react'
+import { Search, MapPin, Briefcase, ArrowRight, Heart } from 'lucide-react'
 import Background from '../components/common/Background'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../services/supabaseClient'
+
+interface Job {
+  id: string
+  title: string
+  description: string
+  location: string
+  job_type: string
+  salary_min?: number
+  salary_max?: number
+  employer_id: string
+  created_at: string
+  required_skills: string[]
+}
 
 export default function Jobs() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('')
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data za početak
-  const jobs = [
-    {
-      id: 1,
-      title: 'Senior React Developer',
-      company: 'TechCorp',
-      location: 'Beograd, Srbija',
-      salary: '1500€ - 2000€',
-      type: 'Full-time',
-      description: 'Tražimo iskusnog React developera sa 5+ godina iskustva...'
-    },
-    {
-      id: 2,
-      title: 'UX/UI Designer',
-      company: 'DesignStudio',
-      location: 'Novi Sad, Srbija',
-      salary: '1000€ - 1500€',
-      type: 'Full-time',
-      description: 'Kreiranje modernih dizajna za web i mobilne aplikacije...'
-    },
-    {
-      id: 3,
-      title: 'Backend Developer (Node.js)',
-      company: 'CloudTech',
-      location: 'Beograd, Srbija',
-      salary: '1800€ - 2200€',
-      type: 'Full-time',
-      description: 'Razvoj backend servisa na Node.js sa TypeScript...'
-    },
-    {
-      id: 4,
-      title: 'Product Manager',
-      company: 'StartupXYZ',
-      location: 'Beograd, Srbija',
-      salary: '1200€ - 1800€',
-      type: 'Full-time',
-      description: 'Upravljanje proizvodom i definisanje strategije...'
-    },
-  ]
+  // Load jobs from database
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const { data, error: supabaseError } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+
+        if (supabaseError) {
+          console.error('Error loading jobs:', supabaseError)
+          setError('Greška pri učitavanju poslova')
+          setJobs([])
+        } else {
+          setJobs(data || [])
+        }
+      } catch (err) {
+        console.error('Error loading jobs:', err)
+        setError('Greška pri učitavanju poslova')
+        setJobs([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadJobs()
+  }, [])
 
   const filteredJobs = jobs.filter(job => 
     (job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     job.company.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedLocation === '' || job.location.includes(selectedLocation))
+     job.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (selectedLocation === '' || (typeof job.location === 'string' && job.location.includes(selectedLocation)))
   )
 
   return (
@@ -96,8 +105,29 @@ export default function Jobs() {
           </div>
         </div>
 
+        {/* Loading state */}
+        {loading && (
+          <div className="relative group">
+            <div className="relative bg-slate-900/90 rounded-2xl p-8 sm:p-12 text-center">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
+                <p className="text-lg text-slate-300">Učitavam poslove...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error state */}
+        {error && !loading && (
+          <div className="relative group">
+            <div className="relative bg-slate-900/90 rounded-2xl p-8 sm:p-12 text-center border border-red-500/30">
+              <p className="text-lg text-red-400">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Jobs List */}
-        {filteredJobs.length > 0 ? (
+        {!loading && !error && filteredJobs.length > 0 ? (
           <div className="space-y-6">
             {filteredJobs.map(job => (
               <div key={job.id} className="relative group">
@@ -107,25 +137,37 @@ export default function Jobs() {
                     <div className="flex-1 space-y-3 sm:space-y-4">
                       <div>
                         <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{job.title}</h3>
-                        <p className="text-lg text-blue-400 font-semibold">{job.company}</p>
+                        <p className="text-lg text-blue-400 font-semibold">Employer</p>
                       </div>
 
                       <div className="flex flex-wrap gap-4 text-sm text-slate-300">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-blue-400" />
-                          {job.location}
+                          {job.location || 'Remote'}
                         </div>
                         <div className="flex items-center gap-2">
                           <Briefcase className="w-4 h-4 text-blue-400" />
-                          {job.type}
+                          {job.job_type}
                         </div>
                       </div>
 
-                      <p className="text-slate-400">{job.description}</p>
+                      <p className="text-slate-400 line-clamp-2">{job.description}</p>
 
-                      <div className="text-xl font-bold text-blue-300">
-                        {job.salary}
-                      </div>
+                      {(job.salary_min || job.salary_max) && (
+                        <div className="text-xl font-bold text-blue-300">
+                          €{job.salary_min}-{job.salary_max}
+                        </div>
+                      )}
+
+                      {job.required_skills && job.required_skills.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {job.required_skills.slice(0, 3).map((skill, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-medium">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-4 md:w-48">
@@ -136,20 +178,24 @@ export default function Jobs() {
                         Apliciraj
                         <ArrowRight className="w-4 h-4" />
                       </Link>
+                      <button className="flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] border-2 border-slate-600 rounded-lg font-bold text-white hover:border-blue-400 hover:text-blue-300 transition-all duration-300">
+                        <Heart className="w-4 h-4" />
+                        Sačuvaj
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
+        ) : !loading && filteredJobs.length === 0 && !error ? (
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block" />
             <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 sm:p-12 text-center">
               <p className="text-xl text-slate-300">Nema dostupnih poslova koji odgovaraju vašoj pretrazi.</p>
             </div>
           </div>
-        )}
+        ) : null}
 
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block" />

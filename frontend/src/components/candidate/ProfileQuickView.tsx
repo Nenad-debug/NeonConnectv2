@@ -1,4 +1,4 @@
-import { Edit2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Edit2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface ProfileQuickViewProps {
@@ -7,89 +7,56 @@ interface ProfileQuickViewProps {
 }
 
 export default function ProfileQuickView({ user, completeness = 0 }: ProfileQuickViewProps) {
-  const getCompletionColor = (completion: number) => {
-    if (completion >= 80) return 'text-emerald-400'
-    if (completion >= 50) return 'text-yellow-400'
-    return 'text-orange-400'
-  }
-
   return (
-    <div className="relative group">
-      {/* Gradient border effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-blue-600/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <div className="group relative overflow-hidden rounded-2xl p-8 bg-gradient-to-br from-slate-900/80 to-slate-950/60 border border-purple-500/30 hover:border-purple-400/80 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
+      {/* Neon glow background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"></div>
       
-      {/* Card */}
-      <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 group-hover:border-blue-500/50 rounded-lg p-6 transition-all duration-300">
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">Profil</h3>
+      <div className="relative">
+        <div className="flex items-start justify-between mb-6">
+          <h3 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">👤 Profil</h3>
           <Link
             to="/edit-profile"
-            className="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all"
+            className="p-2 text-purple-400/60 hover:text-purple-300 transition-all hover:bg-purple-500/20 rounded-lg hover:shadow-lg hover:shadow-purple-500/30"
           >
             <Edit2 className="w-5 h-5" />
           </Link>
         </div>
 
-        {/* User info */}
-        <div className="space-y-4 mb-6 pb-6 border-b border-slate-700/50">
+        <div className="space-y-5">
           <div>
-            <p className="text-sm text-slate-400 mb-1">Ime i prezime</p>
-            <p className="text-lg font-semibold text-white">
+            <p className="text-xs font-bold text-purple-300/60 uppercase tracking-widest">Ime i prezime</p>
+            <p className="text-lg font-bold text-white mt-2">
               {user?.user_metadata?.full_name || 'Nezavršeno'}
             </p>
           </div>
           <div>
-            <p className="text-sm text-slate-400 mb-1">Email</p>
-            <p className="text-lg font-semibold text-blue-300">{user?.email}</p>
+            <p className="text-xs font-bold text-purple-300/60 uppercase tracking-widest">Email</p>
+            <p className="text-sm font-semibold text-purple-300 mt-2">{user?.email}</p>
           </div>
-        </div>
-
-        {/* Completeness bar */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {completeness >= 80 ? (
-                <CheckCircle className="w-5 h-5 text-emerald-400" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-orange-400" />
-              )}
-              <span className="text-sm text-slate-300 font-semibold">Kompletan profil</span>
+          
+          <div className="pt-5 border-t border-purple-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-purple-300/60 uppercase tracking-widest">Kompletan profil</p>
+              <span className="text-sm font-black text-purple-300">{completeness}%</span>
             </div>
-            <span className={`text-lg font-bold ${getCompletionColor(completeness)}`}>
-              {completeness}%
-            </span>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-full transition-all duration-500 ${
-                completeness >= 80
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500'
-                  : completeness >= 50
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                  : 'bg-gradient-to-r from-orange-500 to-red-500'
-              }`}
-              style={{ width: `${completeness}%` }}
-            ></div>
+            <div className="w-full bg-slate-900/60 rounded-full h-3 border border-purple-500/20 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full transition-all duration-500 shadow-lg shadow-purple-500/50"
+                style={{ width: `${completeness}%` }}
+              />
+            </div>
           </div>
 
           {completeness < 100 && (
-            <p className="text-xs text-slate-400 pt-2">
-              Završi profil da bi dobio bolje preporuke
-            </p>
+            <Link
+              to="/edit-profile"
+              className="mt-6 block w-full py-3 px-4 text-center text-sm font-black bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105 transform"
+            >
+              Unapedi profil 🚀
+            </Link>
           )}
         </div>
-
-        {/* CTA Button */}
-        {completeness < 100 && (
-          <Link
-            to="/edit-profile"
-            className="mt-4 w-full py-2 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all text-center block"
-          >
-            Unapedi profil
-          </Link>
-        )}
       </div>
     </div>
   )

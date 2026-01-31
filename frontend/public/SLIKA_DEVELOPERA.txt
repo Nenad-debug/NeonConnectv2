@@ -1,0 +1,16 @@
+Kako da se tvoja slika prikaže u Maintenance popup-u
+====================================================
+
+1. Kopiraj svoju fotografiju u ovaj folder (frontend/public/).
+
+2. Preimenuj je u jedan od ovih naziva:
+   - developer-avatar.jpg   (ako je u JPG formatu)
+   - developer-avatar.png   (ako je u PNG formatu)
+
+3. Preporučena veličina: kvadratna slika, najmanje 112x112 piksela
+   (prikazuje se u krugu 56x56 px, veća slika će se lepo skalirati).
+
+4. Sačuvaj fajl i osvež stranicu — tvoja slika će se pojaviti pored
+   imena "Nenad" u poruci od developera.
+
+Ako fajl ne postoji, prikazaće se inicijal "N" u krugu.

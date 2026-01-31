@@ -4,6 +4,14 @@ import { Briefcase, Users, Zap, Shield, ArrowRight, Mail, X, HelpCircle } from '
 import Background from '../components/common/Background'
 import StatsSection from '../components/common/StatsSection'
 import SocialProof from '../components/common/SocialProof'
+import {
+  IconProfileDocument,
+  IconSearch,
+  IconTrophy,
+  IconCode,
+  IconGear,
+  IconSparkle,
+} from '../components/common/HomeIcons'
 
 export default function Home() {
   const [showContactModal, setShowContactModal] = useState(false)
@@ -39,41 +47,37 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left: Text */}
           <div className="space-y-8 z-10">
-            <div className="space-y-4">
-              <div className="inline-block px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-full text-sm font-semibold text-blue-300 animate-fade-in">
-                ✨ Novi način pronalaženja posla
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-full text-sm font-semibold text-blue-300 hover:border-blue-500/60 transition-all duration-300">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-r from-blue-400 to-cyan-400 text-slate-900 text-xs">⚡</span>
+                Novi način pronalaženja posla
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                Pronađi <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-600 bg-clip-text text-transparent">posao</span> koji transformiše tvoju karijeru
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.1] tracking-tighter text-white overflow-visible" style={{ animationDelay: '0.1s' }}>
+                <div className="inline-block animate-slide-in-up" style={{ animationDelay: '0.1s' }}>Pronađi <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-600 bg-clip-text text-transparent animate-slide-in-up" style={{ animationDelay: '0.2s' }}>POSAO</span></div>
+                <br/>
+                <span className="inline-block animate-slide-in-up" style={{ animationDelay: '0.3s' }}>koji transformiše tvoju karijeru</span>
               </h1>
             </div>
 
-            <p className="text-lg md:text-xl text-slate-300 max-w-lg animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Poveži se sa najboljim kompanijama. NeonConnect je platforma za one koji žele da rastu i uče.
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              Poveži se sa najboljim kompanijama i pronađi pozicije koje se savršeno poklapaju sa tvojim veštinama i ambicijama.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <Link 
                 to="/jobs" 
-                className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-bold text-white flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105"
+                className="group px-8 py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-700 rounded-lg font-bold text-white flex items-center justify-center gap-2 hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 transform hover:scale-105 text-lg"
               >
                 Pretraži poslove
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link 
                 to="/signup?role=employer" 
-                className="px-8 py-4 border-2 border-slate-500 rounded-lg font-bold text-white hover:bg-slate-800/50 hover:border-blue-500 transition-all duration-300"
+                className="px-8 py-4 border-2 border-slate-600 rounded-lg font-bold text-white hover:bg-slate-800/60 hover:border-blue-400 transition-all duration-300 text-lg"
               >
                 Objavi posao
               </Link>
-              <button
-                onClick={() => setShowTestingGuide(true)}
-                className="px-8 py-4 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-lg font-bold text-emerald-300 hover:bg-emerald-500/10 transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <HelpCircle className="w-5 h-5" />
-                Vodič
-              </button>
             </div>
 
             {/* Social proof */}
@@ -94,9 +98,9 @@ export default function Home() {
 
                 <div className="space-y-4">
                   {[
-                    { title: 'Frontend Developer', location: 'Remote · Senior', salary: '€60k-80k', icon: '🎨' },
-                    { title: 'Backend Developer', location: 'Belgrade · Mid', salary: '€50k-70k', icon: '⚙️' },
-                    { title: 'UI/UX Designer', location: 'Remote · Senior', salary: '€45k-65k', icon: '✨' },
+                    { title: 'Frontend Developer', location: 'Remote · Senior', salary: '€60k-80k', Icon: IconCode },
+                    { title: 'Backend Developer', location: 'Belgrade · Mid', salary: '€50k-70k', Icon: IconGear },
+                    { title: 'UI/UX Designer', location: 'Remote · Senior', salary: '€45k-65k', Icon: IconSparkle },
                   ].map((job, idx) => (
                     <div 
                       key={idx}
@@ -104,7 +108,9 @@ export default function Home() {
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex gap-3 flex-1">
-                          <span className="text-2xl">{job.icon}</span>
+                          <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800/80 ring-1 ring-slate-600/50 group-hover/job:ring-blue-500/40 transition-colors">
+                            <job.Icon className="w-5 h-5" />
+                          </span>
                           <div className="flex-1">
                             <h4 className="font-bold text-white group-hover/job:text-blue-300 transition-colors">{job.title}</h4>
                             <p className="text-sm text-slate-400">{job.location}</p>
@@ -129,31 +135,51 @@ export default function Home() {
       </section>
 
       {/* ===== FEATURES SECTION ===== */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6 relative">
+      <section className="py-20 sm:py-28 px-4 sm:px-6 relative overflow-hidden">
+        {/* Background gradient orbs */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl -z-10" />
+        
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Zašto odabrati <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">NeonConnect</span>?
+          <div className="text-center space-y-6 mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm font-medium">
+              <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+              Prednosti platforme
+            </div>
+            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight">
+              Zašto <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">NeonConnect</span>?
             </h2>
-            <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-              Dizajnirano sa stilom i brzo. Lako za korisnike i moćno za kompanije.
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+              Jednostavna, moćna platforma dizajnirana za moderne profesionalce i ozbiljne kompanije
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {[
-              { icon: Briefcase, title: 'Velika baza poslova', desc: 'Stotine aktivnih oglasa iz različitih industrija' },
-              { icon: Users, title: 'Provereni poslodavci', desc: 'Samo ozbiljne kompanije sa potvrđenim profilima' },
-              { icon: Zap, title: 'Brz proces', desc: 'Registracija u minutama, pogledaj poslove odmah' },
-              { icon: Shield, title: 'Sigurnost podataka', desc: 'Tvoji podaci su zaštićeni sa najvećim standardima' },
+              { icon: Briefcase, title: 'Velika baza poslova', desc: 'Stotine aktivnih oglasa iz različitih industrija i nivoa iskustva' },
+              { icon: Users, title: 'Provereni poslodavci', desc: 'Samo ozbiljne kompanije sa potvrđenim profilima i referencama' },
+              { icon: Zap, title: 'Brz proces', desc: 'Registracija u minutama, pogledaj poslove i počni aplikovati odmah' },
+              { icon: Shield, title: 'Sigurnost podataka', desc: 'Tvoji podaci su zaštićeni sa najvišim industrijskim standardima' },
             ].map((feature, idx) => (
               <div 
                 key={idx}
-                className="group p-6 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-blue-500/60 hover:bg-slate-800/60 transition-all duration-300 transform hover:-translate-y-2"
+                className="group relative h-full"
               >
-                <feature.icon className="w-12 h-12 text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                <p className="text-slate-400 text-sm">{feature.desc}</p>
+                {/* Gradient border effect */}
+                <div className="absolute -inset-px bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur" />
+                
+                <div className="relative h-full p-8 rounded-2xl bg-slate-800/40 backdrop-blur border border-slate-700/50 hover:border-blue-500/40 transition-all duration-300 hover:bg-slate-800/60">
+                  {/* Icon container */}
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/30 mb-6 group-hover:scale-110 group-hover:border-blue-500/50 transition-all duration-300">
+                    <feature.icon className="w-8 h-8 text-blue-300 group-hover:text-blue-200 transition-colors" />
+                  </div>
+                  
+                  <h3 className="text-lg font-bold mb-3 text-white">{feature.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+                  
+                  {/* Hover indicator */}
+                  <div className="mt-4 h-1 w-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full group-hover:w-12 transition-all duration-300" />
+                </div>
               </div>
             ))}
           </div>
@@ -161,35 +187,43 @@ export default function Home() {
       </section>
 
       {/* ===== HOW IT WORKS SECTION ===== */}
-      <section className="py-20 px-4 relative">
+      <section className="py-16 sm:py-20 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold">Kako funkcioniše?</h2>
-            <p className="text-lg text-slate-300 max-w-2xl mx-auto">
+          <div className="text-center space-y-3 mb-12">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+              Kako funkcioniše?
+            </h2>
+            <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto">
               Svega 3 koraka do tvoga sledećeg posla
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
-              { step: 1, icon: '📝', title: 'Kreiraj profil', desc: 'Registruj se i popuni tvoj profil za samo par minuta' },
-              { step: 2, icon: '🔍', title: 'Pretraži poslove', desc: 'Pronađi idealne pozicije koje se poklapaju sa tvojim veštinama' },
-              { step: 3, icon: '🎉', title: 'Dobij ponudu', desc: 'Pošalji prijavu i čekaj odgovor od poslodavca' },
+              { step: 1, Icon: IconProfileDocument, title: 'Kreiraj profil', desc: 'Registruj se i popuni tvoj profil za samo par minuta' },
+              { step: 2, Icon: IconSearch, title: 'Pretraži poslove', desc: 'Pronađi idealne pozicije koje se poklapaju sa tvojim veštinama' },
+              { step: 3, Icon: IconTrophy, title: 'Dobij ponudu', desc: 'Pošalji prijavu i čekaj odgovor od poslodavca' },
             ].map((item, idx) => (
-              <div key={idx} className="relative">
-                <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 p-8 rounded-xl border border-slate-700/60 hover:border-blue-500/60 transition-all duration-300">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl font-bold mb-4 mx-auto">
-                    {item.step}
+              <div key={idx} className="relative group">
+                <div className="relative h-full rounded-2xl bg-gradient-to-b from-slate-800/70 to-slate-900/50 p-6 sm:p-8 border border-slate-700/60 transition-all duration-300 hover:border-blue-500/60 hover:shadow-[0_0_40px_-12px_rgba(59,130,246,0.3)] hover:-translate-y-1">
+                  {/* Step badge */}
+                  <div className="flex justify-center mb-4">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-lg font-extrabold text-white ring-2 ring-blue-500/30 shadow-lg shadow-blue-500/20">
+                      {item.step}
+                    </span>
                   </div>
-                  <p className="text-center text-4xl mb-4">{item.icon}</p>
-                  <h3 className="text-xl font-bold text-center mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-center text-sm">{item.desc}</p>
+                  <div className="flex justify-center mb-3">
+                    <item.Icon className="w-14 h-14 sm:w-16 sm:h-16" />
+                  </div>
+                  <h3 className="text-xl font-bold text-center text-white mb-2">{item.title}</h3>
+                  <p className="text-slate-400 text-center text-sm leading-relaxed">{item.desc}</p>
                 </div>
-                
-                {/* Arrow between steps */}
                 {idx < 2 && (
-                  <div className="hidden md:flex absolute -right-4 top-1/3 items-center justify-center">
-                    <ArrowRight className="w-8 h-8 text-slate-600" />
+                  <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 items-center justify-center">
+                    <div className="rounded-full bg-slate-800/80 p-1.5 ring-1 ring-slate-600">
+                      <ArrowRight className="w-6 h-6 text-blue-400" />
+                    </div>
                   </div>
                 )}
               </div>

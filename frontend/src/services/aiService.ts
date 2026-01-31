@@ -43,7 +43,8 @@ export const aiService = {
   async sendMessage(
     userMessage: string,
     _context: string = 'general',
-    previousMessages?: ChatMessage[]
+    previousMessages?: ChatMessage[],
+    userId?: string
   ): Promise<string> {
     try {
       // Check rate limit
@@ -67,6 +68,7 @@ export const aiService = {
             message: userMessage.slice(0, 5000), // Limit message size
             context: _context,
             previousMessages: previousMessages || [],
+            userId: userId, // For server-side rate limiting
           }),
           signal: controller.signal,
         })
@@ -243,4 +245,80 @@ export const aiService = {
       throw err
     }
   },
-}
+
+  /**
+   * Get chat history for a user in a specific context
+   */
+  async getChatHistory(
+    userId: string,
+    context: string = 'general',
+    limit: number = 20
+  ): Promise<ChatMessage[]> {
+    try {
+      console.log(`📚 [AI SERVICE] Loading chat history for ${userId}`)
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('id, role, content, context, created_at')
+        .eq('user_id', userId)
+        .eq('context', context)
+        .order('created_at', { ascending: true })
+        .limit(limit)
+
+      if (error) {
+        if (error.message?.includes('chat_messages') || error.message?.includes('not exist')) {
+          console.warn('⚠️ [AI SERVICE] Chat messages table not set up yet')
+          return []
+        }
+        throw error
+      }
+
+      console.log(`✅ [AI SERVICE] Loaded ${data?.length || 0} messages`)
+      return data?.map(msg => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        context: msg.context,
+      })) || []
+    } catch (err: any) {
+      console.error('❌ [AI SERVICE] Error loading chat history:', err)
+      return []
+    }
+  },
+
+  /**
+   * Delete chat message
+   */
+  async deleteMessage(messageId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId)
+
+      if (error) throw error
+      console.log(`✅ [AI SERVICE] Message ${messageId} deleted`)
+    } catch (err: any) {
+      console.error('❌ [AI SERVICE] Error deleting message:', err)
+      throw err
+    }
+  },
+
+  /**
+   * Clear chat history for a user in a specific context
+   */
+  async clearChatHistory(userId: string, context: string = 'general'): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('user_id', userId)
+        .eq('context', context)
+
+      if (error) throw error
+      console.log(`✅ [AI SERVICE] Chat history cleared for context: ${context}`)
+    } catch (err: any) {
+      console.error('❌ [AI SERVICE] Error clearing chat history:', err)
+      throw err
+    }
+  },}

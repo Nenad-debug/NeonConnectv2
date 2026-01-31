@@ -32,7 +32,7 @@ function App() {
     <Router>
       <AuthGuard>
         <MaintenanceBanner />
-        <div className="flex flex-col min-h-screen gradient-bg pt-16 sm:pt-20">
+        <div className="flex flex-col min-h-screen gradient-bg">
           <Navbar />
           <main className="flex-grow">
             <Suspense fallback={<PageFallback />}>

@@ -38,43 +38,42 @@ export default function StatsSection() {
     return () => clearInterval(interval)
   }, [])
 
+  const displayValue = (raw: number, fallback: string) =>
+    !isLoading && raw > 0 ? raw : fallback
+
   const statItems = [
-    { 
-      number: stats.activeUsers.toString() || '5000+', 
-      label: 'Aktivnih korisnika' 
-    },
-    { 
-      number: stats.activeJobs.toString() || '800+', 
-      label: 'Otvorenih poslova' 
-    },
-    { 
-      number: stats.verifiedCompanies.toString() || '150+', 
-      label: 'Verifikovanih kompanija' 
-    },
+    { raw: stats.activeUsers, number: displayValue(stats.activeUsers, '5000+'), label: 'Aktivnih korisnika' },
+    { raw: stats.activeJobs, number: displayValue(stats.activeJobs, '800+'), label: 'Otvorenih poslova' },
+    { raw: stats.verifiedCompanies, number: displayValue(stats.verifiedCompanies, '150+'), label: 'Verifikovanih kompanija' },
   ]
 
   return (
-    <section className="py-20 px-4 bg-slate-800/30 relative">
+    <section className="py-14 sm:py-16 px-4 relative overflow-hidden">
+      {/* Top glow line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-center justify-items-center">
+        <p className="text-center text-slate-400 text-sm font-medium uppercase tracking-widest mb-10">
+          Platforma u brojevima
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
           {statItems.map((stat, idx) => (
-            <div 
-              key={idx} 
-              className={`space-y-2 transition-opacity duration-300 ${isLoading ? 'opacity-75' : 'opacity-100'}`}
+            <div
+              key={idx}
+              className={`relative rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-900/40 border border-slate-700/50 px-6 py-8 text-center transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_30px_-8px_rgba(59,130,246,0.25)] ${isLoading ? 'opacity-80' : 'opacity-100'}`}
             >
-              <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                {typeof stat.number === 'string' && stat.number.includes('%') 
-                  ? stat.number 
-                  : !isLoading && parseInt(stat.number) > 0
-                  ? <Counter end={parseInt(stat.number)} duration={2000} />
-                  : stat.number
-                }
+              <p className="text-4xl sm:text-5xl font-extrabold tabular-nums bg-gradient-to-b from-blue-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+                {typeof stat.number === 'string' && stat.number.includes('+')
+                  ? stat.number
+                  : !isLoading && stat.raw > 0
+                  ? <Counter end={stat.raw} duration={2000} />
+                  : stat.number}
               </p>
-              <p className="text-slate-300">{stat.label}</p>
+              <p className="mt-2 text-slate-400 text-sm font-medium">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-600/50 to-transparent" />
     </section>
   )
 }

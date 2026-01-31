@@ -102,7 +102,6 @@ export default function GlobalAIAssistant() {
         onClick={() => setIsOpen(true)}
         className={`fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-2xl hover:shadow-3xl transition-all flex items-center justify-center border-2 border-blue-300/50 hover:border-blue-300/100 ai-button-float ${pulse ? 'ai-button-glow' : ''}`}
         title="Otvori AI asistenta"
-        data-tour-ai
       >
         {pulse && <div className="absolute inset-0 rounded-full border-2 border-blue-400/50 pulse-ring"></div>}
         <Sparkles className="w-7 h-7 relative z-10 animate-bounce" />

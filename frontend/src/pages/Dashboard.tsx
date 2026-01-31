@@ -10,8 +10,7 @@ import ProfileQuickView from '../components/candidate/ProfileQuickView'
 import Notifications from '../components/candidate/Notifications'
 import ProfileSetup from '../components/candidate/ProfileSetup'
 import SuccessAnimation from '../components/common/SuccessAnimation'
-import AIGuidedTour from '../components/common/AIGuidedTour'
-import { TrendingUp, Briefcase, Heart, Sparkles, LogOut } from 'lucide-react'
+import { Briefcase, Heart, Sparkles } from 'lucide-react'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
@@ -19,7 +18,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'saved'>('overview')
   const [showProfileSetup, setShowProfileSetup] = useState(false)
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  const [showAITour, setShowAITour] = useState(false)
   const navigate = useNavigate()
 
   // MOCK DATA - Replace with real data from Supabase when available
@@ -198,15 +196,7 @@ export default function Dashboard() {
   }
 
   const handleSuccessAnimationComplete = () => {
-    console.log('🎉 [DASHBOARD] Success animation completed, starting tour...')
-    // Show tour first (z-110 above success z-100), then hide success so no white flash
-    setShowAITour(true)
-    setTimeout(() => setShowSuccessAnimation(false), 100)
-  }
-
-  const handleAITourComplete = () => {
-    console.log('✅ [DASHBOARD] AI tour completed')
-    setShowAITour(false)
+    setShowSuccessAnimation(false)
   }
 
   if (loading) {
@@ -223,26 +213,22 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg text-white relative overflow-hidden py-8">
+    <div className="min-h-screen relative overflow-hidden text-white py-8">
+      {/* Neon Gradient Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950"></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
       <Background />
 
-      {/* Success Animation - Prikazati na kraju Profile Setup */}
+      {/* Success Animation */}
       <SuccessAnimation
         isVisible={showSuccessAnimation}
         onComplete={handleSuccessAnimationComplete}
         userName={user?.user_metadata?.full_name?.split(' ')[0]}
       />
-
-      {/* AI Guided Tour */}
-      {showAITour && (
-        <div className="relative z-50">
-          <AIGuidedTour
-            isActive={showAITour}
-            userName={user?.user_metadata?.full_name?.split(' ')[0]}
-            onComplete={handleAITourComplete}
-          />
-        </div>
-      )}
 
       {/* Profile Setup Modal */}
       <ProfileSetup
@@ -251,42 +237,50 @@ export default function Dashboard() {
         onComplete={handleProfileSetupComplete}
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 space-y-6 sm:space-y-8">
-        {/* ===== HEADER SECTION ===== */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1 sm:space-y-2">
-            <h1 className="text-3xl sm:text-5xl font-black">Dashboard</h1>
-            <p className="text-base sm:text-xl text-slate-300 truncate">
-              Dobrodošao/la, <span className="text-blue-400 font-semibold">{user?.user_metadata?.full_name || user?.email}</span>
-            </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* HEADER - BOLD & DRAMATIC */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                DASHBOARD
+              </h1>
+              <p className="text-cyan-300/80 font-semibold">Upravljajte vašim karijanom sa stilom</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="group px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-red-500/50 transition-all duration-300 hover:scale-105"
+            >
+              Odjava
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="self-start sm:self-auto group px-4 py-3 min-h-[44px] rounded-lg border border-slate-700/50 text-slate-300 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-200 flex items-center gap-2"
-          >
-            <LogOut className="w-5 h-5" />
-            Odjava
-          </button>
         </div>
 
-        {/* ===== QUICK STATS ===== */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* STATS ROW - NEON CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {[
-            { label: 'Moje aplikacije', value: mockApplications.length, icon: Briefcase, color: 'from-blue-600' },
-            { label: 'Sačuvani poslovi', value: mockSavedJobs.length, icon: Heart, color: 'from-rose-600' },
-            { label: 'Preporuke', value: mockRecommendedJobs.length, icon: Sparkles, color: 'from-emerald-600' }
+            { label: 'Moje aplikacije', value: mockApplications.length, icon: Briefcase, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Sačuvani poslovi', value: mockSavedJobs.length, icon: Heart, color: 'from-purple-500 to-pink-500' },
+            { label: 'Preporuke', value: mockRecommendedJobs.length, icon: Sparkles, color: 'from-cyan-500 to-blue-500' }
           ].map((stat, idx) => {
             const Icon = stat.icon
             return (
-              <div key={idx} className="group relative animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                <div className={`absolute -inset-0.5 bg-gradient-to-r ${stat.color} to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block`} />
-                <div className="relative bg-slate-900/90 md:bg-slate-900/80 md:backdrop-blur-xl border border-slate-700/50 rounded-lg p-4 sm:p-6 flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} to-purple-700 bg-opacity-20 flex items-center justify-center`}>
-                    <Icon className="w-6 h-6 text-blue-300" />
+              <div 
+                key={idx} 
+                className="group relative overflow-hidden rounded-2xl p-8 bg-gradient-to-br from-slate-900/80 to-slate-950/60 border border-cyan-500/30 hover:border-cyan-400/80 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/20 transform hover:-translate-y-1"
+              >
+                {/* Neon border glow */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl`}></div>
+                
+                <div className="relative flex items-center gap-6">
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${stat.color} p-1 flex items-center justify-center shadow-lg shadow-cyan-500/30`}>
+                    <div className="w-full h-full bg-slate-950 rounded-lg flex items-center justify-center">
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-400">{stat.label}</p>
-                    <p className="text-3xl font-bold text-white">{stat.value}</p>
+                    <p className="text-sm font-bold text-cyan-300/70 uppercase tracking-wider">{stat.label}</p>
+                    <p className="text-4xl font-black text-white">{stat.value}</p>
                   </div>
                 </div>
               </div>
@@ -294,77 +288,61 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* ===== TABS (tour: filtriranje / pregled sekcija) ===== */}
-        <div className="flex gap-2 sm:gap-4 border-b border-slate-700/50 overflow-x-auto pb-px -mx-1 scrollbar-hide" data-tour-filter>
-          {[
-            { id: 'overview', label: '📊 Pregled' },
-            { id: 'applications', label: '📤 Moje aplikacije' },
-            { id: 'saved', label: '❤️ Sačuvani poslovi' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-shrink-0 px-3 sm:px-4 py-3 min-h-[44px] font-semibold border-b-2 transition-all duration-200 whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* TABS - NEON STYLE */}
+        <div className="border-b border-cyan-500/30 mb-8">
+          <div className="flex gap-2">
+            {[
+              { id: 'overview', label: 'Pregled', icon: '📊' },
+              { id: 'applications', label: 'Moje aplikacije', icon: '📋' },
+              { id: 'saved', label: 'Sačuvani poslovi', icon: '❤️' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-6 py-3 font-bold rounded-lg transition-all duration-300 flex items-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-cyan-500/50'
+                    : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-900/50'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* ===== CONTENT SECTIONS ===== */}
-
-        {/* Overview Tab */}
+        {/* CONTENT */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* 2 Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Recommended Jobs */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <Sparkles className="w-6 h-6 text-emerald-400" />
-                      Preporučeni poslovi
-                    </h2>
-                    <button className="text-sm text-blue-400 hover:text-blue-300 font-semibold">
-                      Prikaži sve →
-                    </button>
-                  </div>
-                  <div data-tour-jobs>
-                    <RecommendedJobs jobs={mockRecommendedJobs.slice(0, 2)} />
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recommended Jobs */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Preporučeni poslovi ✨</h2>
+                  <button className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all">Sve</button>
                 </div>
-
-                {/* Recent Applications */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <TrendingUp className="w-6 h-6 text-blue-400" />
-                      Poslednje aplikacije
-                    </h2>
-                    <button className="text-sm text-blue-400 hover:text-blue-300 font-semibold">
-                      Prikaži sve →
-                    </button>
-                  </div>
-                  <ApplicationsList applications={mockApplications.slice(0, 2)} />
-                </div>
+                <RecommendedJobs jobs={mockRecommendedJobs.slice(0, 2)} />
               </div>
 
-              {/* Right Column - Sidebar */}
-              <div className="space-y-6">
-                {/* Profile Quick View */}
-                <div data-tour-profile>
-                  <ProfileQuickView user={user} completeness={65} />
+              {/* Recent Applications */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Poslednje aplikacije 🚀</h2>
+                  <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all">Sve</button>
                 </div>
+                <ApplicationsList applications={mockApplications.slice(0, 2)} />
+              </div>
+            </div>
 
-                {/* Notifications */}
-                <div className="space-y-4" data-tour-notifications>
-                  <h3 className="text-lg font-bold">Notifikacije</h3>
+            {/* Right Sidebar */}
+            <div className="space-y-8">
+              <ProfileQuickView user={user} completeness={65} />
+              
+              <div className="group relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-slate-900/80 to-slate-950/60 border border-purple-500/30 hover:border-purple-400/80 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"></div>
+                <div className="relative">
+                  <h3 className="font-black text-white mb-4 text-lg">🔔 Notifikacije</h3>
                   <Notifications notifications={mockNotifications} />
                 </div>
               </div>
@@ -372,33 +350,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Applications Tab */}
-        {activeTab === 'applications' && (
-          <div className="space-y-4">
-            <ApplicationsList applications={mockApplications} />
-          </div>
-        )}
-
-        {/* Saved Jobs Tab */}
-        {activeTab === 'saved' && (
-          <div className="space-y-4">
-            <SavedJobs jobs={mockSavedJobs} />
-          </div>
-        )}
-
-        {/* CTA Section */}
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center space-y-4">
-            <h3 className="text-2xl font-bold text-white">Pronađi svoj idealni posao</h3>
-            <p className="text-slate-300 max-w-2xl mx-auto">
-              Pretraži sve dostupne poslove i primeni se za one koji te interesuju
-            </p>
-            <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300">
-              Pretraži poslove
-            </button>
-          </div>
-        </div>
+        {activeTab === 'applications' && <ApplicationsList applications={mockApplications} />}
+        {activeTab === 'saved' && <SavedJobs jobs={mockSavedJobs} />}
       </div>
     </div>
   )
